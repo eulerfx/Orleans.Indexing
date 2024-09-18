@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using Orleans.Runtime;
+using SafeRandom = System.Random;
 
 namespace TestExtensions
 {
@@ -13,6 +14,6 @@ namespace TestExtensions
 
         public static readonly TimeSpan InitTimeout =
             Debugger.IsAttached ? TimeSpan.FromMinutes(10) : TimeSpan.FromMinutes(1);
-        
+
     }
 }

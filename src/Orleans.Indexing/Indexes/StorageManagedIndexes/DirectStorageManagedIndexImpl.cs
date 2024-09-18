@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans.Concurrency;
 using Orleans.Runtime;
+using Orleans.Serialization.TypeSystem;
 using Orleans.Storage;
 using Orleans.Transactions;
 using Orleans.Utilities;
@@ -57,11 +60,11 @@ namespace Orleans.Indexing
 
         private protected DMSIGrain(bool isTransactional) => this.isTransactional = isTransactional;
 
-        public override Task OnActivateAsync()
+        public override Task OnActivateAsync(CancellationToken ct)
         {
             var indexName = IndexUtils.GetIndexNameFromIndexGrain(this);
             _indexedField = indexName.Substring(2);
-            return base.OnActivateAsync();
+            return base.OnActivateAsync(ct);
         }
 
         public Task<bool> DirectApplyIndexUpdateBatch(Immutable<IDictionary<IIndexableGrain, IList<IMemberUpdate>>> iUpdates,
@@ -137,7 +140,8 @@ namespace Orleans.Indexing
                 var grainClassType = grainClassTypes[0];
                 this._grainClassName = IndexUtils.GetFullTypeName(grainClassType);
 
-                _grainStorage = grainClassType.GetGrainStorage(this.SiloIndexManager.ServiceProvider);
+                //_grainStorage = grainClassType.GetGrainStorage(this.SiloIndexManager.ServiceProvider);
+                _grainStorage = this.SiloIndexManager.ServiceProvider.GetRequiredService<IGrainStorage>();
                 if (this.isTransactional)
                 {
                     // TODO: This is also part of the TransactionalStateStorageProviderWrapper workaround; this is the name

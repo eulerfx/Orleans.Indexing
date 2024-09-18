@@ -20,7 +20,7 @@ namespace TestExtensions
         {
             var builder = new TestClusterBuilder();
             TestDefaultConfiguration.ConfigureTestCluster(builder);
-            
+
             builder.AddSiloBuilderConfigurator<SiloHostConfigurator>();
 
             var testCluster = builder.Build();
@@ -32,7 +32,7 @@ namespace TestExtensions
             this.HostedCluster = testCluster;
             this.Logger = this.Client?.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Application");
         }
-        
+
         public TestCluster HostedCluster { get; }
 
         public IGrainFactory GrainFactory => this.HostedCluster?.GrainFactory;
@@ -60,9 +60,9 @@ namespace TestExtensions
             }
         }
 
-        public class SiloHostConfigurator : ISiloBuilderConfigurator
+        public class SiloHostConfigurator : ISiloConfigurator
         {
-            public void Configure(ISiloHostBuilder hostBuilder)
+            public void Configure(ISiloBuilder hostBuilder)
             {
                 hostBuilder
                     .UseInMemoryReminderService()

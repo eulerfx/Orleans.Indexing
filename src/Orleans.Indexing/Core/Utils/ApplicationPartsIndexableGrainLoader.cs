@@ -4,8 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Orleans.ApplicationParts;
+//using Orleans.ApplicationParts;
 using Orleans.Hosting;
 using Orleans.Runtime;
 
@@ -29,10 +30,13 @@ namespace Orleans.Indexing
             this.logger = this.indexManager.LoggerFactory.CreateLoggerWithFullCategoryName<ApplicationPartsIndexableGrainLoader>();
         }
 
-        private static Type[] GetIndexedConcreteGrainClasses(IApplicationPartManager applicationPartManager, ILogger logger = null)
-            => applicationPartManager.ApplicationParts.OfType<AssemblyPart>()
-                .SelectMany(part => part.Assembly.GetIndexedGrainClasses())
-                .ToArray();
+        // private static Type[] GetIndexedConcreteGrainClasses(IApplicationPartManager applicationPartManager, ILogger logger = null)
+        //     => applicationPartManager.ApplicationParts.OfType<AssemblyPart>()
+        //         .SelectMany(part => part.Assembly.GetIndexedGrainClasses())
+        //         .ToArray();
+
+        private static Type[] GetIndexedConcreteGrainClasses(HostBuilderContext context, ILogger logger = null)
+            => Array.Empty<Type>();
 
         /// <summary>
         /// This method crawls the assemblies and looks for the index definitions (determined by extending the <see cref="IIndexableGrain{TProperties}"/>
@@ -40,7 +44,7 @@ namespace Orleans.Indexing
         /// </summary>
         /// <returns>An index registry for the silo. </returns>
         internal IndexRegistry CreateIndexRegistry()
-            => GetIndexRegistry(this, GetIndexedConcreteGrainClasses(this.indexManager.ApplicationPartManager, this.logger));
+            => GetIndexRegistry(this, GetIndexedConcreteGrainClasses(default, this.logger));
 
         /// <summary>
         /// This method crawls the assemblies and looks for the index definitions (determined by extending the <see cref="IIndexableGrain{TProperties}"/>
@@ -55,7 +59,7 @@ namespace Orleans.Indexing
             var indexedClasses = new HashSet<Type>();
             var indexedInterfaces = new HashSet<Type>();
 
-            foreach (var grainClassType in GetIndexedConcreteGrainClasses(context.GetApplicationPartManager()))
+            foreach (var grainClassType in GetIndexedConcreteGrainClasses(context))
             {
                 var consistencyScheme = grainClassType.GetConsistencyScheme();
                 if (consistencyScheme == ConsistencyScheme.Transactional)
@@ -189,7 +193,7 @@ namespace Orleans.Indexing
 
             foreach (var indexableBaseInterface in indexableBaseInterfaces)
             {
-                // ... and its generic argument is a class (TProperties)... 
+                // ... and its generic argument is a class (TProperties)...
                 var propertiesClassType = indexableBaseInterface.GetGenericArguments()[0];
                 if (propertiesClassType.GetTypeInfo().IsClass)
                 {
@@ -265,7 +269,7 @@ namespace Orleans.Indexing
                                  string indexName, Type indexType, bool isEager, bool isUnique, int maxEntriesPerBucket)
         {
             indexesOnGrain[indexName] = this.indexManager.IndexFactory.CreateIndex(indexType, indexName, isUnique, isEager, maxEntriesPerBucket, property);
-            this.logger.Info($"Index created: Interface = {grainInterfaceType.Name}, property = {propertiesArg.Name}, index = {indexName}");
+            this.logger.Info(IndexingErrorCode.Indexing, $"Index created: Interface = {grainInterfaceType.Name}, property = {propertiesArg.Name}, index = {indexName}");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -8,7 +8,7 @@ namespace Orleans.Indexing.Facet
     {
         private static readonly MethodInfo CreateMethod = typeof(IIndexedStateFactory).GetMethod(nameof(IIndexedStateFactory.CreateNonFaultTolerantWorkflowIndexedState));
 
-        public Factory<IGrainActivationContext, object> GetFactory(ParameterInfo parameter, NonFaultTolerantWorkflowIndexedStateAttribute attribute)
+        public Factory<IGrainContext, object> GetFactory(ParameterInfo parameter, NonFaultTolerantWorkflowIndexedStateAttribute attribute)
             => base.GetFactory(CreateMethod, parameter, attribute);
     }
 }

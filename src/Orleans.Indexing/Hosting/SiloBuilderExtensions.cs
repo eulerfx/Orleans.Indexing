@@ -14,21 +14,21 @@ namespace Orleans.Indexing
         /// <summary>
         /// Configure silo to use indexing using a configure action.
         /// </summary>
-        public static ISiloHostBuilder UseIndexing(this ISiloHostBuilder builder, Action<IndexingOptions> configureOptions = null)
+        public static ISiloBuilder UseIndexing(this ISiloBuilder builder, Action<IndexingOptions> configureOptions = null)
         {
             // This is necessary to get the configured NumWorkflowQueuesPerInterface for IndexFactory.RegisterIndexWorkflowQueueGrainServices.
             var indexingOptions = new IndexingOptions();
             configureOptions?.Invoke(indexingOptions);
 
             return builder
-                .ConfigureDefaults()
-                .AddSimpleMessageStreamProvider(IndexingConstants.INDEXING_STREAM_PROVIDER_NAME)
-                .AddMemoryGrainStorage(IndexingConstants.INDEXING_WORKFLOWQUEUE_STORAGE_PROVIDER_NAME)
-                .AddMemoryGrainStorage(IndexingConstants.INDEXING_STORAGE_PROVIDER_NAME)
-                .AddMemoryGrainStorage(IndexingConstants.MEMORY_STORAGE_PROVIDER_NAME)
-                .ConfigureApplicationParts(parts => parts.AddFrameworkPart(typeof(SiloBuilderExtensions).Assembly))
-                .ConfigureServices(services => services.UseIndexing(indexingOptions))
-                .ConfigureServices((context, services) => ApplicationPartsIndexableGrainLoader.RegisterGrainServices(context, services, indexingOptions))
+                //.ConfigureDefaults()
+                //.AddSimpleMessageStreamProvider(IndexingConstants.INDEXING_STREAM_PROVIDER_NAME)
+                //.AddMemoryGrainStorage(IndexingConstants.INDEXING_WORKFLOWQUEUE_STORAGE_PROVIDER_NAME)
+                //.AddMemoryGrainStorage(IndexingConstants.INDEXING_STORAGE_PROVIDER_NAME)
+                //.AddMemoryGrainStorage(IndexingConstants.MEMORY_STORAGE_PROVIDER_NAME)
+                //.ConfigureApplicationParts(parts => parts.AddFrameworkPart(typeof(SiloBuilderExtensions).Assembly))
+                //.ConfigureServices(services => services.UseIndexing(indexingOptions))
+                //.ConfigureServices((context, services) => ApplicationPartsIndexableGrainLoader.RegisterGrainServices(context, services, indexingOptions))
                 .UseTransactions();
         }
 

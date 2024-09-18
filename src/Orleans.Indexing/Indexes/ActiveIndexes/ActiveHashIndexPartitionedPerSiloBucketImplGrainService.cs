@@ -16,7 +16,7 @@ namespace Orleans.Indexing
 {
     /// <summary>
     /// A simple implementation of a single-grain in-memory hash-index.
-    /// 
+    ///
     /// TODO: Generic GrainServices are not supported yet, and that's why the implementation is non-generic.
     /// </summary>
     //Per comments for IActiveHashIndexPartitionedPerSiloBucket, we cannot use generics here.
@@ -45,8 +45,8 @@ namespace Orleans.Indexing
             this.logger = siloIndexManager.LoggerFactory.CreateLoggerWithFullCategoryName<ActiveHashIndexPartitionedPerSiloBucketImplGrainService>();
         }
 
-        private static IGrainIdentity GetGrainIdentity(SiloIndexManager siloIndexManager, Type grainInterfaceType, string indexName)
-            => GetGrainReference(siloIndexManager, grainInterfaceType, indexName).GrainIdentity;
+        private static GrainId GetGrainIdentity(SiloIndexManager siloIndexManager, Type grainInterfaceType, string indexName)
+            => GetGrainReference(siloIndexManager, grainInterfaceType, indexName).GrainId;
 
         internal static GrainReference GetGrainReference(SiloIndexManager siloIndexManager, Type grainInterfaceType, string indexName, SiloAddress siloAddress = null)
             => siloIndexManager.MakeGrainServiceGrainReference(IndexingConstants.HASH_INDEX_PARTITIONED_PER_SILO_BUCKET_GRAIN_SERVICE_TYPE_CODE,
@@ -59,13 +59,13 @@ namespace Orleans.Indexing
 
         public async Task<bool> DirectApplyIndexUpdateBatch(Immutable<IDictionary<IIndexableGrain, IList<IMemberUpdate>>> iUpdates, bool isUnique, IndexMetaData idxMetaData, SiloAddress siloAddress = null)
         {
-            logger.Trace($"ParentIndex {_parentIndexName}: Started calling DirectApplyIndexUpdateBatch with the following parameters: isUnique = {isUnique}," +
-                         $" siloAddress = {siloAddress}, iUpdates = {MemberUpdate.UpdatesToString(iUpdates.Value)}", isUnique, siloAddress);
+            logger.Trace(IndexingErrorCode.Indexing, $"ParentIndex {_parentIndexName}: Started calling DirectApplyIndexUpdateBatch with the following parameters: isUnique = {isUnique}," +
+                                                     $" siloAddress = {siloAddress}, iUpdates = {MemberUpdate.UpdatesToString(iUpdates.Value)}", isUnique, siloAddress);
 
             await Task.WhenAll(iUpdates.Value.Select(kvp => DirectApplyIndexUpdates(kvp.Key, kvp.Value, isUnique, idxMetaData, siloAddress)));
 
-            logger.Trace($"Finished calling DirectApplyIndexUpdateBatch with the following parameters: isUnique = {isUnique}, siloAddress = {siloAddress}," +
-                         $" iUpdates = {MemberUpdate.UpdatesToString(iUpdates.Value)}");
+            logger.Trace(IndexingErrorCode.Indexing, $"Finished calling DirectApplyIndexUpdateBatch with the following parameters: isUnique = {isUnique}, siloAddress = {siloAddress}," +
+                                                     $" iUpdates = {MemberUpdate.UpdatesToString(iUpdates.Value)}");
             return true;
         }
 
@@ -142,7 +142,7 @@ namespace Orleans.Indexing
                                    IndexingErrorCode.IndexingIndexIsNotReadyYet_GrainServiceBucket5);
         }
 
-        public Task Dispose()
+        public new Task Dispose()
         {
             state.IndexStatus = IndexStatus.Disposed;
             state.IndexMap.Clear();

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Orleans.Concurrency;
@@ -28,10 +29,10 @@ namespace Orleans.Indexing
         private ILogger Logger => __logger ?? (__logger = this.SiloIndexManager.LoggerFactory.CreateLoggerWithFullCategoryName<ActiveHashIndexPartitionedPerSiloImpl<K, V>>());
         private ILogger __logger;
 
-        public override Task OnActivateAsync()
+        public override Task OnActivateAsync(CancellationToken ct)
         {
             _status = IndexStatus.Available;
-            return base.OnActivateAsync();
+            return base.OnActivateAsync(ct);
         }
 
         /// <summary>
@@ -79,7 +80,7 @@ namespace Orleans.Indexing
 
         async Task<IOrleansQueryResult<IIndexableGrain>> IIndexInterface.LookupAsync(object key)
         {
-            Logger.Trace($"Eager index lookup called for key = {key}");
+            Logger.Trace(IndexingErrorCode.Indexing, $"Eager index lookup called for key = {key}");
 
             //get all silos
             Dictionary<SiloAddress, SiloStatus> hosts = await this.SiloIndexManager.GetSiloHosts(true);

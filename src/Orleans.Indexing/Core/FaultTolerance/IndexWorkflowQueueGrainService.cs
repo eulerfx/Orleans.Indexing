@@ -15,10 +15,10 @@ namespace Orleans.Indexing
     ///   the following information:
     ///    - workflowID: grainID + a sequence number
     ///    - memberUpdates: the updated values of indexed fields
-    ///  
+    ///
     ///   Ordinarily, these workflowRecords are for grains that are active on <see cref="IndexWorkflowQueueGrainService"/>'s silo. (This may not be true for
     ///   short periods when a grain migrates to another silo or after the silo recovers from failure).
-    /// 
+    ///
     /// + The <see cref="IndexWorkflowQueueGrainService"/> grain Q has a dictionary updatesOnWait is an in-memory dictionary that maps each grain G to the
     ///   workflowRecords for G that are waiting for be updated.
     /// </summary>
@@ -29,11 +29,11 @@ namespace Orleans.Indexing
         private IndexWorkflowQueueBase _base;
 
         internal IndexWorkflowQueueGrainService(SiloIndexManager siloIndexManager, Type grainInterfaceType, int queueSequenceNumber, bool isDefinedAsFaultTolerantGrain)
-            : base(IndexWorkflowQueueBase.CreateIndexWorkflowQueueGrainReference(siloIndexManager, grainInterfaceType, queueSequenceNumber, siloIndexManager.SiloAddress).GrainIdentity,
+            : base(IndexWorkflowQueueBase.CreateIndexWorkflowQueueGrainReference(siloIndexManager, grainInterfaceType, queueSequenceNumber, siloIndexManager.SiloAddress).GrainId,
                                                                                  siloIndexManager.Silo, siloIndexManager.LoggerFactory)
         {
             _base = new IndexWorkflowQueueBase(siloIndexManager, grainInterfaceType, queueSequenceNumber, siloIndexManager.SiloAddress, isDefinedAsFaultTolerantGrain,
-                                               () => base.GetGrainReference()); // lazy is needed because the runtime isn't attached until Registered
+                                               () => base.GrainReference); // lazy is needed because the runtime isn't attached until Registered
         }
 
         public Task AddAllToQueue(Immutable<List<IndexWorkflowRecord>> workflowRecords)

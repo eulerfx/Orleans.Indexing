@@ -11,11 +11,11 @@ namespace Orleans.Indexing
         private IIndexWorkflowQueueHandler _base;
 
         internal IndexWorkflowQueueHandlerGrainService(SiloIndexManager sim, Type grainInterfaceType, int queueSeqNum, bool isDefinedAsFaultTolerantGrain)
-            : base(IndexWorkflowQueueHandlerBase.CreateIndexWorkflowQueueHandlerGrainReference(sim, grainInterfaceType, queueSeqNum, sim.SiloAddress).GrainIdentity,
+            : base(IndexWorkflowQueueHandlerBase.CreateIndexWorkflowQueueHandlerGrainReference(sim, grainInterfaceType, queueSeqNum, sim.SiloAddress).GrainId,
                                                                                                sim.Silo, sim.LoggerFactory)
         {
             _base = new IndexWorkflowQueueHandlerBase(sim, grainInterfaceType, queueSeqNum, sim.SiloAddress, isDefinedAsFaultTolerantGrain,
-                                                      () => base.GetGrainReference());  // lazy is needed because the runtime isn't attached until Registered
+                                                      () => base.GrainReference);  // lazy is needed because the runtime isn't attached until Registered
         }
 
         public Task HandleWorkflowsUntilPunctuation(Immutable<IndexWorkflowRecordNode> workflowRecordsHead)

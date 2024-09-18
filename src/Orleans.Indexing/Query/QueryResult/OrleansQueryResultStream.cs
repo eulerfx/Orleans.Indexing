@@ -8,11 +8,12 @@ namespace Orleans.Indexing
 {
     /// <summary>
     /// This class represents the result of a query.
-    /// 
+    ///
     /// OrleansQueryResultStream is actually a stream of results that can be observed by its client.
     /// </summary>
     /// <typeparam name="TIGrain">type of grain for query result</typeparam>
     [Serializable]
+    [GenerateSerializer]
     public class OrleansQueryResultStream<TIGrain> : IOrleansQueryResultStream<TIGrain> where TIGrain : IIndexableGrain
     {
         // TODO: Currently, the whole result is stored here, but it is just a simple implementation. This implementation should
@@ -32,7 +33,7 @@ namespace Orleans.Indexing
 
         public Task OnErrorAsync(Exception ex) => this._stream.OnErrorAsync(ex);
 
-        public virtual Task OnNextAsync(TIGrain item, StreamSequenceToken token = null) 
+        public virtual Task OnNextAsync(TIGrain item, StreamSequenceToken token = null)
             => this._stream.OnNextAsync(item, token);
 
         public virtual Task OnNextAsync(IList<SequentialItem<TIGrain>> batch)

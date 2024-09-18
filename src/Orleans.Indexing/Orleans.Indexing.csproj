@@ -7,6 +7,7 @@
       Library for Orleans Indexing feature
     </Description>
     <PackageTags>$(PackageTags) Indexing</PackageTags>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -24,14 +25,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Orleans.Core" Version="$(OrleansVersion)" />
-    <PackageReference Include="Microsoft.Orleans.OrleansCodeGenerator.Build" Version="$(OrleansVersion)">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Orleans.OrleansProviders" Version="$(OrleansVersion)" />
-    <PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="$(OrleansVersion)" />
-    <PackageReference Include="Microsoft.Orleans.OrleansProviders" Version="$(OrleansVersion)" />
-    <PackageReference Include="Microsoft.Orleans.Transactions" Version="$(OrleansVersion)" />
+    <PackageReference Include="Microsoft.Orleans.Core" Version="8.2.0" />
+    <PackageReference Include="Microsoft.Orleans.Streaming" Version="8.2.0" />
+    <PackageReference Include="Microsoft.Orleans.Transactions" Version="8.2.0" />
   </ItemGroup>
 </Project>

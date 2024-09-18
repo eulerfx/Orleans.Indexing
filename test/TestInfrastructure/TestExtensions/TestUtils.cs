@@ -122,18 +122,21 @@ namespace Tester
     {
         public static void SetActivityId(Guid id)
         {
-            RequestContext.ActivityId = id;
+            RequestContext.Set("ActivityId", id);
+            //RequestContext.ActivityId = id;
         }
 
         public static Guid GetActivityId()
         {
-            return RequestContext.ActivityId;
+            return (Guid)RequestContext.Get("ActivityId");
+            //return RequestContext.ActivityId;
         }
 
         public static void ClearActivityId()
         {
-            Trace.CorrelationManager.ActivityId = Guid.Empty;
-            RequestContext.ActivityId = Guid.Empty;
+            RequestContext.Remove("ActivityId");
+            //Trace.CorrelationManager.ActivityId = Guid.Empty;
+            //RequestContext.ActivityId = Guid.Empty;
         }
     }
 }

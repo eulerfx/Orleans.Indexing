@@ -6,6 +6,7 @@ namespace Orleans.Indexing
     /// The meta data that is stored beside the index
     /// </summary>
     [Serializable]
+    [GenerateSerializer]
     public class IndexMetaData
     {
         private Type _indexType;

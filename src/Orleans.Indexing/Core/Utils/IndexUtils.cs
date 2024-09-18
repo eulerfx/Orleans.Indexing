@@ -236,7 +236,7 @@ namespace Orleans.Indexing
         internal static IGrainStorage GetGrainStorage(IServiceProvider services, string storageName)
         {
             var storageProvider = !string.IsNullOrEmpty(storageName)
-                ? services.GetServiceByName<IGrainStorage>(storageName)
+                ? services.GetKeyedService<IGrainStorage>(storageName)
                 : services.GetService<IGrainStorage>();
             string failedProviderName() => string.IsNullOrEmpty(storageName) ? "default storage provider" : $"storage provider with the name {storageName}";
             return storageProvider ?? throw new IndexConfigurationException($"No {failedProviderName()} was found while attempting to create index state storage.");

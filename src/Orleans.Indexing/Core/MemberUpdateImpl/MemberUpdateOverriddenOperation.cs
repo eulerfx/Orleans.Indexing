@@ -7,6 +7,7 @@ namespace Orleans.Indexing
     /// the actual operation in the original update
     /// </summary>
     [Serializable]
+    [GenerateSerializer]
     internal class MemberUpdateOverriddenOperation : IMemberUpdate
     {
         private IMemberUpdate _update;

@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 namespace Orleans.Indexing.Tests
 {
     [Serializable]
+    [GenerateSerializer]
     public class TestAbortTransactionException : Exception
     {
         public TestAbortTransactionException() : base("Aborting indexing test transaction.") { }
@@ -12,6 +13,7 @@ namespace Orleans.Indexing.Tests
 
         public TestAbortTransactionException(string message, Exception innerException) : base(message, innerException) { }
 
+        [Obsolete]
         protected TestAbortTransactionException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {

@@ -6,10 +6,11 @@ namespace Orleans.Indexing
 {
     /// <summary>
     /// A node in the linked list of workflowRecords.
-    /// 
+    ///
     /// This linked list makes the traversal more efficient.
     /// </summary>
     [Serializable]
+    [GenerateSerializer]
     internal class IndexWorkflowRecordNode
     {
         internal IndexWorkflowRecord WorkflowRecord;

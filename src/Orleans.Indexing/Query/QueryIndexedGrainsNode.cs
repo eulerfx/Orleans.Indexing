@@ -31,7 +31,7 @@ namespace Orleans.Indexing
         public override async Task ObserveResults(IAsyncBatchObserver<TIGrain> observer)
         {
             IIndexInterface index = base.IndexFactory.GetIndex(typeof(TIGrain), this._indexName);
-            IAsyncStream<TIGrain> resultStream = base.StreamProvider.GetStream<TIGrain>(Guid.NewGuid(), IndexUtils.GetIndexGrainPrimaryKey(typeof(TIGrain), this._indexName));
+            IAsyncStream<TIGrain> resultStream = base.StreamProvider.GetStream<TIGrain>(id: Guid.NewGuid(), ns: IndexUtils.GetIndexGrainPrimaryKey(typeof(TIGrain), this._indexName));
 
             IOrleansQueryResultStream<TIGrain> result = new OrleansQueryResultStream<TIGrain>(resultStream);
 

@@ -10,6 +10,7 @@ namespace Orleans.Indexing
     /// <typeparam name="K">type of hash-index key</typeparam>
     /// <typeparam name="V">type of grain that is being indexed</typeparam>
     [Serializable]
+    [GenerateSerializer]
     public class HashIndexBucketState<K, V> where V : IIndexableGrain
     {
         /// <summary>
@@ -34,6 +35,7 @@ namespace Orleans.Indexing
     /// </summary>
     /// <typeparam name="T">the type of elements stored in the entry</typeparam>
     [Serializable]
+    [GenerateSerializer]
     public sealed class HashIndexSingleBucketEntry<T>
     {
         /// <summary>

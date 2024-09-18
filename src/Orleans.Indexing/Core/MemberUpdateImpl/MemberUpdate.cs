@@ -7,10 +7,11 @@ namespace Orleans.Indexing
     /// <summary>
     /// MemberUpdate is a generic implementation of IMemberUpdate that relies on a copy of beforeImage and afterImage, without
     /// keeping any semantic information about the actual change that happened.
-    /// 
+    ///
     /// This class assumes that befImg and aftImg passed to it won't be altered later on, so they are immutable.
     /// </summary>
     [Serializable]
+    [GenerateSerializer]
     internal class MemberUpdate : IMemberUpdate
     {
         private object _befImg;

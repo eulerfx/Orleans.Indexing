@@ -13,7 +13,7 @@ namespace Orleans.Indexing.Facet
     {
         private protected readonly IServiceProvider ServiceProvider;
         private protected readonly IIndexedStateConfiguration IndexedStateConfig;
-        private protected readonly IGrainActivationContext grainActivationContext;
+        private protected readonly IGrainContext grainActivationContext;
 
         private protected Grain grain;
         private protected IIndexableGrain iIndexableGrain;
@@ -23,7 +23,7 @@ namespace Orleans.Indexing.Facet
         private protected GrainIndexes _grainIndexes;
         private protected bool _hasAnyUniqueIndex;
 
-        public IndexedStateBase(IServiceProvider sp, IIndexedStateConfiguration config, IGrainActivationContext context)
+        public IndexedStateBase(IServiceProvider sp, IIndexedStateConfiguration config, IGrainContext context)
         {
             this.ServiceProvider = sp;
             this.IndexedStateConfig = config;
@@ -55,7 +55,7 @@ namespace Orleans.Indexing.Facet
             lifecycle.Subscribe<TSubclass>(GrainLifecycleStage.Activate, ct => OnActivateAsync(ct), ct => OnDeactivateAsync(ct));
         }
 
-        private protected Task OnSetupStateAsync() => this.Initialize(this.grainActivationContext.GrainInstance);
+        private protected Task OnSetupStateAsync() => this.Initialize(this.grain);
 
         internal abstract Task OnActivateAsync(CancellationToken ct);
 
@@ -81,7 +81,7 @@ namespace Orleans.Indexing.Facet
         }
 
         /// <summary>
-        /// After some changes were made to the grain, and the grain is in a consistent state, this method is called to update the 
+        /// After some changes were made to the grain, and the grain is in a consistent state, this method is called to update the
         /// indexes defined on this grain type.
         /// </summary>
         /// <remarks>

@@ -4,9 +4,10 @@ using System.Reflection;
 namespace Orleans.Indexing
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     [Serializable]
+    [GenerateSerializer]
     internal class IndexUpdateGenerator : IIndexUpdateGenerator
     {
         PropertyInfo prop;

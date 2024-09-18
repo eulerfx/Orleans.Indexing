@@ -18,7 +18,7 @@ namespace Orleans.Indexing.Facet
         public NonFaultTolerantWorkflowIndexedState(
                 IServiceProvider sp,
                 IIndexedStateConfiguration config,
-                IGrainActivationContext context
+                IGrainContext context
             ) : base(sp, config, context)
         {
             base.getWorkflowIdFunc = () => Guid.NewGuid();
@@ -29,7 +29,7 @@ namespace Orleans.Indexing.Facet
         internal override async Task OnActivateAsync(CancellationToken ct)
         {
             Debug.Assert(!(this is FaultTolerantWorkflowIndexedState<TGrainState>));    // Ensure this is overridden
-            base.Logger.Trace($"Activating indexable grain of type {grain.GetType().Name} in silo {this.SiloIndexManager.SiloAddress}.");
+            base.Logger.Trace(IndexingErrorCode.Indexing, $"Activating indexable grain of type {grain.GetType().Name} in silo {this.SiloIndexManager.SiloAddress}.");
             await base.InitializeState();
             await base.FinishActivateAsync();
         }
@@ -71,7 +71,7 @@ namespace Orleans.Indexing.Facet
                     // so they are not visible to readers before making sure that all uniqueness constraints are satisfied.
                     await this.ApplyIndexUpdatesEagerly(interfaceToUpdatesMap, UpdateIndexType.Unique, updateEagerUniqueIndexesTentatively);
                 }
-                catch (UniquenessConstraintViolatedException ex)
+                catch (UniquenessConstraintViolatedException)
                 {
                     // If any uniqueness constraint is violated and we have more than one unique index defined, then all tentative
                     // updates must be undone, then the exception is thrown back to the user code.
@@ -79,7 +79,8 @@ namespace Orleans.Indexing.Facet
                     {
                         await this.UndoTentativeChangesToUniqueIndexesEagerly(interfaceToUpdatesMap);
                     }
-                    throw ex;
+                    //throw ex;
+                    throw;
                 }
             }
 
@@ -117,7 +118,7 @@ namespace Orleans.Indexing.Facet
 
         /// <summary>
         /// Lazily Applies updates to the indexes defined on this grain
-        /// 
+        ///
         /// The lazy update involves adding a workflow record to the corresponding IIndexWorkflowQueue for this grain.
         /// </summary>
         /// <param name="updatesByInterface">the dictionary of updates for each index by interface</param>

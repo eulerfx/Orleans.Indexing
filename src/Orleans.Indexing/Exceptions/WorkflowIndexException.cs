@@ -7,12 +7,14 @@ namespace Orleans.Indexing
     /// This exception is thrown when a workflow indexing exception is encountered.
     /// </summary>
     [Serializable]
+    [GenerateSerializer]
     public class WorkflowIndexException : IndexException
     {
         public WorkflowIndexException(string message) : base(message)
         {
         }
 
+        [Obsolete]
         protected WorkflowIndexException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {

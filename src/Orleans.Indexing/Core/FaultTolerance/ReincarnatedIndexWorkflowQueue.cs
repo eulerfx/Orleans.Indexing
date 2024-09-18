@@ -2,7 +2,9 @@ using Orleans.Concurrency;
 using Orleans.Runtime;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Orleans.Indexing
 {
@@ -15,10 +17,10 @@ namespace Orleans.Indexing
         internal SiloIndexManager SiloIndexManager => IndexManager.GetSiloIndexManager(ref __siloIndexManager, base.ServiceProvider);
         private SiloIndexManager __siloIndexManager;
 
-        public override Task OnActivateAsync()
+        public override Task OnActivateAsync(CancellationToken ct)
         {
             DelayDeactivation(ACTIVE_FOR_A_DAY);
-            return base.OnActivateAsync();
+            return base.OnActivateAsync(ct);
         }
 
         public Task Initialize(IIndexWorkflowQueue oldParentGrainService)
@@ -37,7 +39,7 @@ namespace Orleans.Indexing
                 int queueSequenceNumber = int.Parse(parts[1]);
 
                 _base = new IndexWorkflowQueueBase(this.SiloIndexManager, grainInterfaceType, queueSequenceNumber,
-                                                   oldParentGrainServiceRef.GrainServiceSiloAddress,
+                                                   this.ServiceProvider.GetRequiredService<IGrainRuntime>().SiloAddress,
                                                    isDefinedAsFaultTolerantGrain: true /*otherwise it shouldn't have reached here!*/,
                                                    parentFunc: () => this.AsWeaklyTypedReference(), recoveryGrainReference:oldParentGrainServiceRef);
             }

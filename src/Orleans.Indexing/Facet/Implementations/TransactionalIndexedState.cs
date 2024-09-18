@@ -20,7 +20,7 @@ namespace Orleans.Indexing.Facet
         public TransactionalIndexedState(
                 IServiceProvider sp,
                 IIndexedStateConfiguration config,
-                IGrainActivationContext context,
+                IGrainContext context,
                 ITransactionalStateFactory transactionalStateFactory
             ) : base(sp, config, context)
         {

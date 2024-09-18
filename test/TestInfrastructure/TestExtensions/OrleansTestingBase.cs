@@ -1,6 +1,8 @@
 using System;
 using Orleans.Runtime;
 
+using SafeRandom = System.Random;
+
 namespace TestExtensions
 {
     public abstract class OrleansTestingBase

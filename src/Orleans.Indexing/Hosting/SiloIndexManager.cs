@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Orleans.ApplicationParts;
+//using Orleans.ApplicationParts;
 using Orleans.Core;
 using Orleans.Indexing.TestInjection;
 using Orleans.Runtime;
@@ -8,6 +8,7 @@ using Orleans.Services;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Orleans.Serialization.TypeSystem;
 
 namespace Orleans.Indexing
 {
@@ -30,10 +31,10 @@ namespace Orleans.Indexing
         internal IGrainReferenceRuntime GrainReferenceRuntime { get; }
 
         internal IGrainServiceFactory GrainServiceFactory { get; }
-        
 
-        public SiloIndexManager(IServiceProvider sp, IGrainFactory gf, IApplicationPartManager apm, ILoggerFactory lf, ITypeResolver tr)
-            : base(sp, gf, apm, lf, tr)
+
+        public SiloIndexManager(IServiceProvider sp, IGrainFactory gf, ILoggerFactory lf, TypeResolver tr)
+            : base(sp, gf, lf, tr)
         {
             this.InjectableCode = this.ServiceProvider.GetService<IInjectableCode>() ?? new ProductionInjectableCode();
             this.GrainReferenceRuntime = this.ServiceProvider.GetRequiredService<IGrainReferenceRuntime>();
@@ -42,19 +43,29 @@ namespace Orleans.Indexing
 
         public void Participate(ISiloLifecycle lifecycle)
         {
+
             lifecycle.Subscribe(this.GetType().FullName, ServiceLifecycleStage.ApplicationServices, ct => base.OnStartAsync(ct), ct => base.OnStopAsync(ct));
         }
 
         internal Task<Dictionary<SiloAddress, SiloStatus>> GetSiloHosts(bool onlyActive = false)
             => this.GrainFactory.GetGrain<IManagementGrain>(0).GetHosts(onlyActive);
 
-        public GrainReference MakeGrainServiceGrainReference(int typeData, string systemGrainId, SiloAddress siloAddress)
-            => GrainServiceFactory.MakeGrainServiceReference(typeData, systemGrainId, siloAddress);
+        public GrainReference MakeGrainServiceGrainReference(int typeData, string systemGrainId,
+            SiloAddress siloAddress) =>
+            throw new NotImplementedException();
+            //=> GrainReference.FromGrainId(GrainId.GetGrainServiceGrainId(typeData, systemGrainId), this.GrainReferenceRuntime, siloAddress);
+            //=> GrainServiceFactory.MakeGrainServiceReference(typeData, systemGrainId, siloAddress);
+            //=> new GrainReference(new GrainReferenceShared(GrainType.Create(systemGrainId), new GrainInterfaceType() ))
+            //=> GrainReferenceRuntime
 
         internal T GetGrainService<T>(GrainReference grainReference) where T : IGrainService
             => GrainServiceFactory.CastToGrainServiceReference<T>(grainReference);
 
         internal IStorage<TGrainState> GetStorageBridge<TGrainState>(Grain grain, string storageName) where TGrainState : class, new()
-            => new StateStorageBridge<TGrainState>(grain.GetType().FullName, grain.GrainReference, IndexUtils.GetGrainStorage(this.ServiceProvider, storageName), this.LoggerFactory);
+            => new StateStorageBridge<TGrainState>(grain.GetType().FullName, grain.GrainContext, IndexUtils.GetGrainStorage(this.ServiceProvider, storageName));
+
+        //public GrainReference MakeGrainServiceReference(int typeData, string systemGrainId, SiloAddress siloAddress)
+            //=> new GrainReference(GrainId.GetGrainServiceGrainId(typeData, systemGrainId), this.runtimeClient.GrainReferenceRuntime, systemTargetSilo: siloAddress);
+
     }
 }

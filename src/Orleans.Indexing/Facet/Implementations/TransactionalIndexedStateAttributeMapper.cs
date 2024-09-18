@@ -8,7 +8,7 @@ namespace Orleans.Indexing.Facet
     {
         private static readonly MethodInfo CreateMethod = typeof(IIndexedStateFactory).GetMethod(nameof(IIndexedStateFactory.CreateTransactionalIndexedState));
 
-        public Factory<IGrainActivationContext, object> GetFactory(ParameterInfo parameter, TransactionalIndexedStateAttribute attribute)
+        public Factory<IGrainContext, object> GetFactory(ParameterInfo parameter, TransactionalIndexedStateAttribute attribute)
             => base.GetFactory(CreateMethod, parameter, attribute);
     }
 }

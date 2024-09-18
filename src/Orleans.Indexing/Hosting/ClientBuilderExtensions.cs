@@ -19,11 +19,11 @@ namespace Orleans.Indexing
         /// </summary>
         public static IClientBuilder UseIndexing(this IClientBuilder builder, Action<OptionsBuilder<IndexingOptions>> configureAction = null)
         {
-            return builder
-                .ConfigureDefaults()
-                .AddSimpleMessageStreamProvider(IndexingConstants.INDEXING_STREAM_PROVIDER_NAME)
-                .ConfigureServices(services => services.UseIndexing(configureAction))
-                .ConfigureApplicationParts(parts => parts.AddFrameworkPart(typeof(SiloBuilderExtensions).Assembly));
+            return builder;
+            //.ConfigureDefaults()
+            //.AddSimpleMessageStreamProvider(IndexingConstants.INDEXING_STREAM_PROVIDER_NAME)
+            //.ConfigureServices(services => services.UseIndexing(configureAction))
+            //.ConfigureApplicationParts(parts => parts.AddFrameworkPart(typeof(SiloBuilderExtensions).Assembly));
         }
 
         /// <summary>

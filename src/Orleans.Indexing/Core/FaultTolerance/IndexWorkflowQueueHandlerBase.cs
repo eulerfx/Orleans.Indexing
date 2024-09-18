@@ -57,9 +57,10 @@ namespace Orleans.Indexing
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                throw e;    // TODO empty handler; add logic or remove
+                //throw e;    // TODO empty handler; add logic or remove
+                throw;
             }
         }
 
@@ -147,7 +148,7 @@ namespace Orleans.Indexing
 
         // TODO clean up some of the duplicated id-generation code.
         private IIndexWorkflowQueue InitIndexWorkflowQueue()
-            => __workflowQueue = _lazyParent.Value.IsGrainService
+            => __workflowQueue = _lazyParent.Value.GrainId.IsSystemTarget()
                     ? _siloIndexManager.GetGrainService<IIndexWorkflowQueue>(IndexWorkflowQueueBase.CreateIndexWorkflowQueueGrainReference(_siloIndexManager, _grainInterfaceType, _queueSeqNum, _silo))
                     : _siloIndexManager.GrainFactory.GetGrain<IIndexWorkflowQueue>(IndexWorkflowQueueBase.CreateIndexWorkflowQueuePrimaryKey(_grainInterfaceType, _queueSeqNum));
 

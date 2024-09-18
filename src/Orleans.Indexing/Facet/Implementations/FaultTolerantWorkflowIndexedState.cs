@@ -18,7 +18,7 @@ namespace Orleans.Indexing.Facet
         public FaultTolerantWorkflowIndexedState(
                 IServiceProvider sp,
                 IIndexedStateConfiguration config,
-                IGrainActivationContext context,
+                IGrainContext context,
                 IGrainFactory grainFactory
             ) : base(sp, config, context)
         {
@@ -128,7 +128,7 @@ namespace Orleans.Indexing.Facet
         }
 
         /// <summary>
-        /// Handles the remaining workflows of the grain 
+        /// Handles the remaining workflows of the grain
         /// </summary>
         /// <returns>the actual list of workflow record IDs that were available in the queue(s)</returns>
         private Task<IEnumerable<Guid>> HandleRemainingWorkflows()
@@ -269,7 +269,7 @@ namespace Orleans.Indexing.Facet
 
         /// <summary>
         /// Generates a unique Guid that does not exist in the list of active workflows.
-        /// 
+        ///
         /// Actually, there is a very unlikely possibility that we end up with a duplicate workflow ID in the following scenario:
         /// 1- IndexableGrain G is updated and assigned workflow ID = A
         /// 2- workflow record with ID = A is added to the index workflow queue
@@ -277,7 +277,7 @@ namespace Orleans.Indexing.Facet
         /// 4- G is re-activated and reads it state from storage (which does not include A in its active workflow list)
         /// 5- G gets updated and a new workflow with ID = A is generated for it.
         ///    This ID is assumed to be unique, while it actually is not unique and already exists in the workflow queue.
-        /// 
+        ///
         /// The only way to avoid it is using a centralized unique workflow ID generator, which can be added if necessary.
         /// </summary>
         /// <returns>a new unique workflow ID</returns>

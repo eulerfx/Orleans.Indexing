@@ -27,32 +27,34 @@ namespace Orleans.Indexing
     {
         internal static void Debug(this ILogger logger, IndexingErrorCode errorCode, string format, params object[] args)
         {
-            if (logger.IsEnabled(LogLevel.Debug)) logger.Debug((int)errorCode, format, args, null);
+            if (logger.IsEnabled(LogLevel.Debug)) logger.Debug(errorCode, format, args, null);
         }
 
+        internal static void Trace(this ILogger logger, string format, params object[] args) =>
+            logger.Trace(IndexingErrorCode.Indexing, format, args);
         internal static void Trace(this ILogger logger, IndexingErrorCode errorCode, string format, params object[] args)
         {
-            if (logger.IsEnabled(LogLevel.Trace)) logger.Trace((int)errorCode, format, args, null);
+            if (logger.IsEnabled(LogLevel.Trace)) logger.Trace(errorCode, format, args, null);
         }
 
         internal static void Info(this ILogger logger, IndexingErrorCode errorCode, string format, params object[] args)
         {
-            if (logger.IsEnabled(LogLevel.Information)) logger.Info((int)errorCode, format, args, null);
+            if (logger.IsEnabled(LogLevel.Information)) logger.Info(errorCode, format, args, null);
         }
 
         internal static void Warn(this ILogger logger, IndexingErrorCode errorCode, string format, params object[] args)
         {
-            if (logger.IsEnabled(LogLevel.Warning)) logger.Warn((int)errorCode, format, args, null);
+            if (logger.IsEnabled(LogLevel.Warning)) logger.Warn(errorCode, format, args, null);
         }
 
         internal static void Warn(this ILogger logger, IndexingErrorCode errorCode, string message, Exception exception)
         {
-            if (logger.IsEnabled(LogLevel.Warning)) logger.Warn((int)errorCode,  message, new object[] { }, exception);
+            if (logger.IsEnabled(LogLevel.Warning)) logger.Warn(errorCode,  message, new object[] { }, exception);
         }
 
         internal static void Error(this ILogger logger, IndexingErrorCode errorCode, string message, Exception exception = null)
         {
-            if (logger.IsEnabled(LogLevel.Error)) logger.Error((int)errorCode, message, exception);
+            if (logger.IsEnabled(LogLevel.Error)) logger.Error(errorCode, message, exception);
         }
     }
 }

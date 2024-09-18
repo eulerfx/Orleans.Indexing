@@ -1,10 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Orleans.ApplicationParts;
+//using Orleans.ApplicationParts;
 using Orleans.Runtime;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Orleans.Serialization.TypeSystem;
 
 namespace Orleans.Indexing
 {
@@ -13,9 +14,9 @@ namespace Orleans.Indexing
     /// </summary>
     internal class IndexManager : ILifecycleParticipant<IClusterClientLifecycle>
     {
-        internal IApplicationPartManager ApplicationPartManager;
+        //internal IApplicationPartManager ApplicationPartManager;
 
-        internal ITypeResolver CachedTypeResolver { get; }
+        internal TypeResolver CachedTypeResolver { get; }
 
         internal IndexRegistry IndexRegistry { get; private set; }
 
@@ -31,11 +32,10 @@ namespace Orleans.Indexing
 
         internal ILoggerFactory LoggerFactory { get; }
 
-        public IndexManager(IServiceProvider sp, IGrainFactory gf, IApplicationPartManager apm, ILoggerFactory lf, ITypeResolver typeResolver)
+        public IndexManager(IServiceProvider sp, IGrainFactory gf, ILoggerFactory lf, TypeResolver typeResolver)
         {
             this.ServiceProvider = sp;
             this.GrainFactory = gf;
-            this.ApplicationPartManager = apm;
             this.LoggerFactory = lf;
             this.CachedTypeResolver = typeResolver;
 

@@ -1,13 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Runtime;
+using Orleans.Serialization.TypeSystem;
 
 namespace Orleans.Indexing.Facet
 {
     public class IndexedStateFactory : IIndexedStateFactory
     {
-        private readonly IGrainActivationContext activationContext;
+        private readonly IGrainContext activationContext;
 
-        public IndexedStateFactory(IGrainActivationContext activationContext, ITypeResolver typeResolver, IGrainFactory grainFactory)
+        public IndexedStateFactory(IGrainContext activationContext, TypeResolver typeResolver, IGrainFactory grainFactory)
             => this.activationContext = activationContext;
 
         public INonFaultTolerantWorkflowIndexedState<TState> CreateNonFaultTolerantWorkflowIndexedState<TState>(IIndexedStateConfiguration config)
