@@ -26,7 +26,7 @@ namespace Orleans.Indexing
     [Reentrant]
     internal class IndexWorkflowQueueGrainService : GrainService, IIndexWorkflowQueue
     {
-        private IndexWorkflowQueueBase _base;
+        IndexWorkflowQueueBase _base;
 
         internal IndexWorkflowQueueGrainService(SiloIndexManager siloIndexManager, Type grainInterfaceType, int queueSequenceNumber, bool isDefinedAsFaultTolerantGrain)
             : base(IndexWorkflowQueueBase.CreateIndexWorkflowQueueGrainReference(siloIndexManager, grainInterfaceType, queueSequenceNumber, siloIndexManager.SiloAddress).GrainId,

@@ -251,7 +251,7 @@ namespace Orleans.Indexing
         internal static bool IsPartitionedPerSiloIndex(this Type indexType)
             => indexType.RequireIndexInterfaceType() && typeof(IActiveHashIndexPartitionedPerSilo).IsAssignableFrom(indexType);
 
-        internal static bool IsTotalIndex(this Type indexType)
+        static bool IsTotalIndex(this Type indexType)
             => indexType.RequireIndexInterfaceType() && typeof(ITotalIndex).IsAssignableFrom(indexType);
 
         internal static bool IsTransactionalIndex(this Type indexType)

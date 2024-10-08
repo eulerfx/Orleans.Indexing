@@ -72,7 +72,7 @@ namespace Orleans.Indexing.Facet
                 var res = updateFunction(wrappedState.UserState);
 
                 // The property values here are ephemeral; they are re-initialized by UpdateBeforeImages in EnsureStateInitialized.
-                this._grainIndexes.MapStateToProperties(wrappedState.UserState);
+                this.grainIndexes.MapStateToProperties(wrappedState.UserState);
                 return res;
             });
 
@@ -87,11 +87,11 @@ namespace Orleans.Indexing.Facet
         void EnsureStateInitialized(IndexedGrainStateWrapper<TGrainState> wrappedState, bool forUpdate)
         {
             // State initialization is deferred as we must be in a transaction context to access it.
-            wrappedState.EnsureNullValues(base._grainIndexes.PropertyNullValues);
+            wrappedState.EnsureNullValues(base.grainIndexes.PropertyNullValues);
             if (forUpdate)
             {
                 // Apply the deferred BeforeImage update.
-                _grainIndexes.UpdateBeforeImages(wrappedState.UserState, force:true);
+                this.grainIndexes.UpdateBeforeImages(wrappedState.UserState, force:true);
             }
         }
 
@@ -104,7 +104,7 @@ namespace Orleans.Indexing.Facet
         /// <param name="numberOfUniqueIndexesUpdated">determine the number of updated unique indexes; unused for transactional indexes</param>
         /// <param name="writeStateIfConstraintsAreNotViolated">whether the state should be written to storage if no constraint is violated;
         ///                                                     must always be true for transactional indexes</param>
-        private protected override async Task ApplyIndexUpdates(InterfaceToUpdatesMap interfaceToUpdatesMap,
+        protected override async Task ApplyIndexUpdates(InterfaceToUpdatesMap interfaceToUpdatesMap,
                                                                 bool updateIndexesEagerly,
                                                                 bool onlyUniqueIndexesWereUpdated,
                                                                 int numberOfUniqueIndexesUpdated,
@@ -118,7 +118,7 @@ namespace Orleans.Indexing.Facet
                 Debug.Assert(updateIndexesEagerly, "Transactional indexes cannot be configured to be lazy; this misconfiguration should have been caught in ValidateSingleIndex.");
                 IEnumerable<Task> getIndexUpdateTasks(Type grainInterfaceType, IReadOnlyDictionary<string, IMemberUpdate> updates)
                 {
-                    var indexInterfaces = this._grainIndexes[grainInterfaceType];
+                    var indexInterfaces = this.grainIndexes[grainInterfaceType];
                     foreach (var (indexName, mu) in updates.Where(kvp => kvp.Value.OperationType != IndexOperationType.None).OrderBy(kvp => kvp.Key))
                     {
                         var indexInfo = indexInterfaces.NamedIndexes[indexName];

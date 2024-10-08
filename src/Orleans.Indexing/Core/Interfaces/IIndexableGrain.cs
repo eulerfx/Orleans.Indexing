@@ -25,6 +25,7 @@ namespace Orleans.Indexing
     public interface IIndexableGrain : IGrain
     {
         #region Workflow Fault-Tolerant required methods    // TODO: Default implementation in C# 8.0
+
         /// <summary>
         /// This method returns the set of active workflow IDs for a Total Index
         /// </summary>
@@ -34,6 +35,7 @@ namespace Orleans.Indexing
         /// This method removes a workflow ID from the list of active workflow IDs for a Total Index
         /// </summary>
         Task RemoveFromActiveWorkflowIds(HashSet<Guid> removedWorkflowId);
+
         #endregion Workflow Fault-Tolerant required methods
     }
 }

@@ -15,7 +15,7 @@ namespace Orleans.Indexing.Facet
                                                                                       where TGrainState : class, new()
                                                                                       where TWrappedState: IndexedGrainStateWrapper<TGrainState>, new()
     {
-        public NonFaultTolerantWorkflowIndexedState(
+        protected NonFaultTolerantWorkflowIndexedState(
                 IServiceProvider sp,
                 IIndexedStateConfiguration config,
                 IGrainContext context
@@ -28,7 +28,7 @@ namespace Orleans.Indexing.Facet
 
         internal override async Task OnActivateAsync(CancellationToken ct)
         {
-            Debug.Assert(!(this is FaultTolerantWorkflowIndexedState<TGrainState>));    // Ensure this is overridden
+            Debug.Assert(this is not FaultTolerantWorkflowIndexedState<TGrainState>);    // Ensure this is overridden
             base.Logger.Trace(IndexingErrorCode.Indexing, $"Activating indexable grain of type {grain.GetType().Name} in silo {this.SiloIndexManager.SiloAddress}.");
             await base.InitializeState();
             await base.FinishActivateAsync();
@@ -42,7 +42,7 @@ namespace Orleans.Indexing.Facet
         /// <param name="onlyUniqueIndexesWereUpdated">a flag to determine whether only unique indexes were updated</param>
         /// <param name="numberOfUniqueIndexesUpdated">determine the number of updated unique indexes</param>
         /// <param name="writeStateIfConstraintsAreNotViolated">whether the state should be written to storage if no constraint is violated</param>
-        private protected override async Task ApplyIndexUpdates(InterfaceToUpdatesMap interfaceToUpdatesMap,
+        protected override async Task ApplyIndexUpdates(InterfaceToUpdatesMap interfaceToUpdatesMap,
                                                                 bool updateIndexesEagerly,
                                                                 bool onlyUniqueIndexesWereUpdated,
                                                                 int numberOfUniqueIndexesUpdated,
@@ -112,7 +112,7 @@ namespace Orleans.Indexing.Facet
             this.UpdateBeforeImages(interfaceToUpdatesMap);
         }
 
-        private Task UndoTentativeChangesToUniqueIndexesEagerly(InterfaceToUpdatesMap interfaceToUpdatesMap)
+        Task UndoTentativeChangesToUniqueIndexesEagerly(InterfaceToUpdatesMap interfaceToUpdatesMap)
             => Task.WhenAll(interfaceToUpdatesMap.Select(kvp => base.ApplyIndexUpdatesEagerly(kvp.Key, MemberUpdateReverseTentative.Reverse(kvp.Value),
                                                                                               UpdateIndexType.Unique, isTentative: false)));
 
@@ -123,7 +123,6 @@ namespace Orleans.Indexing.Facet
         /// </summary>
         /// <param name="updatesByInterface">the dictionary of updates for each index by interface</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ApplyIndexUpdatesLazilyWithoutWait(InterfaceToUpdatesMap updatesByInterface)
-            => base.ApplyIndexUpdatesLazily(updatesByInterface).Ignore();
+        void ApplyIndexUpdatesLazilyWithoutWait(InterfaceToUpdatesMap updatesByInterface) => base.ApplyIndexUpdatesLazily(updatesByInterface).Ignore();
     }
 }

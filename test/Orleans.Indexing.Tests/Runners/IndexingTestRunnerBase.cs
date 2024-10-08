@@ -44,8 +44,8 @@ namespace Orleans.Indexing.Tests
         protected TInterface GetGrain<TInterface>(long primaryKey, Type grainImplType) where TInterface : IGrainWithIntegerKey
             => this.GrainFactory.GetGrain<TInterface>(primaryKey, grainImplType.FullName.Replace("+", "."));
 
-        protected IIndexInterface<TKey, TValue> GetIndex<TKey, TValue>(string indexName) where TValue : IIndexableGrain
-            => this.IndexFactory.GetIndex<TKey, TValue>(indexName);
+        // protected IIndexInterface<TKey, TValue> GetIndex<TKey, TValue>(string indexName) where TValue : IIndexableGrain
+        //     => this.IndexFactory.GetIndex<TKey, TValue>(indexName);
 
         protected async Task<IIndexInterface<TKey, TValue>> GetAndWaitForIndex<TKey, TValue>(string indexName) where TValue : IIndexableGrain
         {

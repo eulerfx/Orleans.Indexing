@@ -14,8 +14,8 @@ namespace Orleans.Indexing
     [GenerateSerializer]
     internal class MemberUpdate : IMemberUpdate
     {
-        private object _befImg;
-        private object _aftImg;
+        object _befImg;
+        object _aftImg;
 
         public IndexUpdateMode UpdateMode => IndexUpdateMode.NonTentative;
 
@@ -36,7 +36,7 @@ namespace Orleans.Indexing
         {
         }
 
-        private static IndexOperationType GetOperationType(object befImg, object aftImg)
+        static IndexOperationType GetOperationType(object befImg, object aftImg)
         {
             if (befImg == null)
             {

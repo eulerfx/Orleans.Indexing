@@ -14,15 +14,15 @@ namespace Orleans.Indexing
 {
     internal class ApplicationPartsIndexableGrainLoader
     {
-        private readonly IndexManager indexManager;
-        private readonly ILogger logger;
+        readonly IndexManager indexManager;
+        readonly ILogger logger;
 
-        private static readonly Type indexAttrType = typeof(IndexAttribute);
-        private static readonly PropertyInfo indexTypeProperty = typeof(IndexAttribute).GetProperty(nameof(IndexAttribute.IndexType));
-        private static readonly PropertyInfo isEagerProperty = typeof(IndexAttribute).GetProperty(nameof(IndexAttribute.IsEager));
-        private static readonly PropertyInfo isUniqueProperty = typeof(IndexAttribute).GetProperty(nameof(IndexAttribute.IsUnique));
-        private static readonly PropertyInfo maxEntriesPerBucketProperty = typeof(IndexAttribute).GetProperty(nameof(IndexAttribute.MaxEntriesPerBucket));
-        private static readonly PropertyInfo transactionalVariantProperty = typeof(TransactionalIndexVariantAttribute).GetProperty(nameof(TransactionalIndexVariantAttribute.TransactionalIndexType));
+        static readonly Type indexAttrType = typeof(IndexAttribute);
+        static readonly PropertyInfo indexTypeProperty = typeof(IndexAttribute).GetProperty(nameof(IndexAttribute.IndexType));
+        static readonly PropertyInfo isEagerProperty = typeof(IndexAttribute).GetProperty(nameof(IndexAttribute.IsEager));
+        static readonly PropertyInfo isUniqueProperty = typeof(IndexAttribute).GetProperty(nameof(IndexAttribute.IsUnique));
+        static readonly PropertyInfo maxEntriesPerBucketProperty = typeof(IndexAttribute).GetProperty(nameof(IndexAttribute.MaxEntriesPerBucket));
+        static readonly PropertyInfo transactionalVariantProperty = typeof(TransactionalIndexVariantAttribute).GetProperty(nameof(TransactionalIndexVariantAttribute.TransactionalIndexType));
 
         internal ApplicationPartsIndexableGrainLoader(IndexManager indexManager)
         {
@@ -35,8 +35,8 @@ namespace Orleans.Indexing
         //         .SelectMany(part => part.Assembly.GetIndexedGrainClasses())
         //         .ToArray();
 
-        private static Type[] GetIndexedConcreteGrainClasses(HostBuilderContext context, ILogger logger = null)
-            => Array.Empty<Type>();
+        static Type[] GetIndexedConcreteGrainClasses(HostBuilderContext context, ILogger logger = null)
+            => throw new NotImplementedException();
 
         /// <summary>
         /// This method crawls the assemblies and looks for the index definitions (determined by extending the <see cref="IIndexableGrain{TProperties}"/>
@@ -87,7 +87,7 @@ namespace Orleans.Indexing
                             {
                                 // Queues are per-interface, not per-index.
                                 IndexFactory.RegisterIndexWorkflowQueueGrainServices(services, grainInterfaceType, indexingOptions,
-                                                                                     consistencyScheme == ConsistencyScheme.FaultTolerantWorkflow);
+                                                                                     isFaultTolerant: consistencyScheme == ConsistencyScheme.FaultTolerantWorkflow);
                             }
                             createQueues = false;
 
@@ -121,7 +121,7 @@ namespace Orleans.Indexing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void GetIndexesForASingleGrainType(ApplicationPartsIndexableGrainLoader loader, IndexRegistry registry, Type grainClassType)
+        static void GetIndexesForASingleGrainType(ApplicationPartsIndexableGrainLoader loader, IndexRegistry registry, Type grainClassType)
         {
             // First see if any indexed interfaces on this grain were already encountered on another grain (unless we're
             // in validation mode, which doesn't create the indexes).
@@ -208,7 +208,7 @@ namespace Orleans.Indexing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool? CreateIndexesForASingleInterface(ApplicationPartsIndexableGrainLoader loader, IndexRegistry registry,
+        static bool? CreateIndexesForASingleInterface(ApplicationPartsIndexableGrainLoader loader, IndexRegistry registry,
                                                               Type propertiesClassType, Type grainInterfaceType, Type grainClassType,
                                                               ConsistencyScheme consistencyScheme, bool? grainIndexesAreEager)
         {
@@ -265,8 +265,7 @@ namespace Orleans.Indexing
             return grainIndexesAreEager;
         }
 
-        private void CreateIndex(Type propertiesArg, Type grainInterfaceType, NamedIndexMap indexesOnGrain, PropertyInfo property,
-                                 string indexName, Type indexType, bool isEager, bool isUnique, int maxEntriesPerBucket)
+        void CreateIndex(Type propertiesArg, Type grainInterfaceType, NamedIndexMap indexesOnGrain, PropertyInfo property, string indexName, Type indexType, bool isEager, bool isUnique, int maxEntriesPerBucket)
         {
             indexesOnGrain[indexName] = this.indexManager.IndexFactory.CreateIndex(indexType, indexName, isUnique, isEager, maxEntriesPerBucket, property);
             this.logger.Info(IndexingErrorCode.Indexing, $"Index created: Interface = {grainInterfaceType.Name}, property = {propertiesArg.Name}, index = {indexName}");
@@ -277,7 +276,7 @@ namespace Orleans.Indexing
                                                 PropertyInfo propInfo, bool? grainIndexesAreEager, ConsistencyScheme consistencyScheme, bool isEager, bool isUnique)
         {
             var indexType = (Type)indexTypeProperty.GetValue(indexAttr);
-            var isTotalIndex = indexType.IsTotalIndex();
+            //var isTotalIndex = indexType.IsTotalIndex();
             var isPerSiloIndex = indexType.IsPartitionedPerSiloIndex();
             var isFaultTolerantWorkflow = consistencyScheme == ConsistencyScheme.FaultTolerantWorkflow;
             var isTransactional = consistencyScheme == ConsistencyScheme.Transactional;

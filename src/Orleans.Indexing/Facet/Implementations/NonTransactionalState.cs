@@ -7,7 +7,7 @@ namespace Orleans.Indexing.Facet
     internal class NonTransactionalState<TGrainState> : ITransactionalState<TGrainState>
         where TGrainState : class, new()
     {
-        private readonly IStorage<TGrainState> storage;
+        readonly IStorage<TGrainState> storage;
 
         private NonTransactionalState(IStorage<TGrainState> storage)    // private; use Create()
             => this.storage = storage;

@@ -13,7 +13,7 @@ namespace Orleans.Indexing.Facet
                                                                     ILifecycleParticipant<IGrainLifecycle>
                                                                     where TGrainState : class, new()
     {
-        private readonly IGrainFactory _grainFactory;    // TODO: standardize leading _ or not; and don't do this._
+        readonly IGrainFactory grainFactory;    // TODO: standardize leading _ or not; and don't do this._
 
         public FaultTolerantWorkflowIndexedState(
                 IServiceProvider sp,
@@ -22,13 +22,13 @@ namespace Orleans.Indexing.Facet
                 IGrainFactory grainFactory
             ) : base(sp, config, context)
         {
-            this._grainFactory = grainFactory;
+            this.grainFactory = grainFactory;
             base.getWorkflowIdFunc = () => this.GenerateUniqueWorkflowId();
         }
 
-        private bool _hasAnyTotalIndex;
+        bool _hasAnyTotalIndex;
 
-        private FaultTolerantIndexedGrainStateWrapper<TGrainState> ftWrappedState => base.nonTransactionalState.State;
+        FaultTolerantIndexedGrainStateWrapper<TGrainState> ftWrappedState => base.nonTransactionalState.State;
 
         internal override IDictionary<Type, IIndexWorkflowQueue> WorkflowQueues
         {
@@ -36,7 +36,7 @@ namespace Orleans.Indexing.Facet
             set => this.ftWrappedState.WorkflowQueues = value;
         }
 
-        private HashSet<Guid> ActiveWorkflowsSet
+        HashSet<Guid> ActiveWorkflowsSet
         {
             get => this.ftWrappedState.ActiveWorkflowsSet;
             set => this.ftWrappedState.ActiveWorkflowsSet = value;
@@ -61,10 +61,9 @@ namespace Orleans.Indexing.Facet
                 // There are some remaining active workflows so they should be handled first.
                 this.PruneWorkflowQueuesForMissingInterfaceTypes();
                 await this.HandleRemainingWorkflows()
-                          .ContinueWith(t => Task.WhenAll(this.PruneActiveWorkflowsSetFromAlreadyHandledWorkflows(t.Result),
-                                                          base.FinishActivateAsync()));
+                          .ContinueWith(t => Task.WhenAll(this.PruneActiveWorkflowsSetFromAlreadyHandledWorkflows(t.Result), base.FinishActivateAsync()), cancellationToken: ct);
             }
-            this._hasAnyTotalIndex = base._grainIndexes.HasAnyTotalIndex;
+            this._hasAnyTotalIndex = base.grainIndexes.HasAnyTotalIndex;
         }
 
         /// <summary>
@@ -75,15 +74,17 @@ namespace Orleans.Indexing.Facet
         /// <param name="onlyUniqueIndexesWereUpdated">a flag to determine whether only unique indexes were updated</param>
         /// <param name="numberOfUniqueIndexesUpdated">determine the number of updated unique indexes</param>
         /// <param name="writeStateIfConstraintsAreNotViolated">whether the state should be written to storage if no constraint is violated</param>
-        private protected override async Task ApplyIndexUpdates(InterfaceToUpdatesMap interfaceToUpdatesMap,
-                                                                bool updateIndexesEagerly, bool onlyUniqueIndexesWereUpdated,
-                                                                int numberOfUniqueIndexesUpdated, bool writeStateIfConstraintsAreNotViolated)
+        protected override async Task ApplyIndexUpdates(
+            InterfaceToUpdatesMap interfaceToUpdatesMap,
+            bool updateIndexesEagerly,
+            bool onlyUniqueIndexesWereUpdated,
+            int numberOfUniqueIndexesUpdated,
+            bool writeStateIfConstraintsAreNotViolated)
         {
             if (interfaceToUpdatesMap.IsEmpty || !this._hasAnyTotalIndex)
             {
                 // Drop down to non-fault-tolerant
-                await base.ApplyIndexUpdates(interfaceToUpdatesMap, updateIndexesEagerly, onlyUniqueIndexesWereUpdated,
-                                             numberOfUniqueIndexesUpdated, writeStateIfConstraintsAreNotViolated);
+                await base.ApplyIndexUpdates(interfaceToUpdatesMap, updateIndexesEagerly, onlyUniqueIndexesWereUpdated, numberOfUniqueIndexesUpdated, writeStateIfConstraintsAreNotViolated);
                 return;
             }
 
@@ -117,7 +118,8 @@ namespace Orleans.Indexing.Facet
             {
                 // There is no constraint violation, so add the workflow ID to the list of active (committed/in-flight) workflows.
                 // Note that there is no race condition allowing the lazy update to sneak in before we add these, because grain access
-                // is single-threaded unless the method is marked as interleaved; this method is called from this.WriteStateAsync, which
+                // is single-threaded unless the method is marked as interleaved;
+                // this method is called from this.WriteStateAsync, which
                 // is not marked as interleaved, so the queue handler call to this.GetActiveWorkflowIdsSet blocks until this method exits.
                 this.AddWorkflowIdsToActiveWorkflows(interfaceToUpdatesMap.Select(kvp => interfaceToUpdatesMap.WorkflowIds[kvp.Key]).ToArray());
                 await this.WriteStateAsync();
@@ -131,7 +133,7 @@ namespace Orleans.Indexing.Facet
         /// Handles the remaining workflows of the grain
         /// </summary>
         /// <returns>the actual list of workflow record IDs that were available in the queue(s)</returns>
-        private Task<IEnumerable<Guid>> HandleRemainingWorkflows()
+        Task<IEnumerable<Guid>> HandleRemainingWorkflows()
         {
             // A copy of WorkflowQueues is required, because we want to iterate over it and add/remove elements from/to it.
             var copyOfWorkflowQueues = new Dictionary<Type, IIndexWorkflowQueue>(this.WorkflowQueues);
@@ -145,7 +147,7 @@ namespace Orleans.Indexing.Facet
         /// <param name="grainInterfaceType">the grain interface type being indexed</param>
         /// <param name="oldWorkflowQ">the previous workflow queue responsible for handling the updates</param>
         /// <returns>the actual list of workflow record IDs that were available in this queue</returns>
-        private async Task<IEnumerable<Guid>> HandleRemainingWorkflows(Type grainInterfaceType, IIndexWorkflowQueue oldWorkflowQ)
+        async Task<IEnumerable<Guid>> HandleRemainingWorkflows(Type grainInterfaceType, IIndexWorkflowQueue oldWorkflowQ)
         {
             // Keeps the reference to the reincarnated workflow queue, if the original workflow queue (GrainService) did not respond.
             IIndexWorkflowQueue reincarnatedOldWorkflowQ = null;
@@ -156,6 +158,7 @@ namespace Orleans.Indexing.Facet
             // First, we remove the workflow queue associated with grainInterfaceType (i.e., oldWorkflowQ) so that another call to get the
             // workflow queue for grainInterfaceType gets the new workflow queue responsible for grainInterfaceType (otherwise oldWorkflowQ is returned).
             this.WorkflowQueues.Remove(grainInterfaceType);
+
             var newWorkflowQ = this.GetWorkflowQueue(grainInterfaceType);
 
             // If the same workflow queue is responsible we just check what workflow records are still in process
@@ -174,8 +177,7 @@ namespace Orleans.Indexing.Facet
                 try
                 {
                     // Get the list of remaining workflow records from oldWorkflowQ.
-                    remainingWorkflows = await this.SiloIndexManager.InjectableCode
-                                                   .GetRemainingWorkflowsIn(() => oldWorkflowQ.GetRemainingWorkflowsIn(this.ActiveWorkflowsSet));
+                    remainingWorkflows = await this.SiloIndexManager.InjectableCode.GetRemainingWorkflowsIn(() => oldWorkflowQ.GetRemainingWorkflowsIn(this.ActiveWorkflowsSet));
                 }
                 catch
                 {
@@ -202,11 +204,11 @@ namespace Orleans.Indexing.Facet
             return Enumerable.Empty<Guid>();
         }
 
-        private async Task<IIndexWorkflowQueue> GetReincarnatedWorkflowQueue(IIndexWorkflowQueue workflowQ)
+        async Task<IIndexWorkflowQueue> GetReincarnatedWorkflowQueue(IIndexWorkflowQueue workflowQ)
         {
             var primaryKey = workflowQ.GetPrimaryKeyString();
-            var reincarnatedQ = this._grainFactory.GetGrain<IIndexWorkflowQueue>(primaryKey);
-            var reincarnatedQHandler = this._grainFactory.GetGrain<IIndexWorkflowQueueHandler>(primaryKey);
+            var reincarnatedQ = this.grainFactory.GetGrain<IIndexWorkflowQueue>(primaryKey);
+            var reincarnatedQHandler = this.grainFactory.GetGrain<IIndexWorkflowQueueHandler>(primaryKey);
 
             // This is called during OnActivateAsync(), so workflowQ's may be on a different silo than the
             // current grain activation.
@@ -214,7 +216,7 @@ namespace Orleans.Indexing.Facet
             return reincarnatedQ;
         }
 
-        private Task PruneActiveWorkflowsSetFromAlreadyHandledWorkflows(IEnumerable<Guid> workflowsInProgress)
+        Task PruneActiveWorkflowsSetFromAlreadyHandledWorkflows(IEnumerable<Guid> workflowsInProgress)
         {
             var initialSize = this.ActiveWorkflowsSet.Count;
             this.ActiveWorkflowsSet.Clear();
@@ -222,11 +224,11 @@ namespace Orleans.Indexing.Facet
             return (this.ActiveWorkflowsSet.Count != initialSize) ? this.WriteStateAsync() : Task.CompletedTask;
         }
 
-        private void PruneWorkflowQueuesForMissingInterfaceTypes()
+        void PruneWorkflowQueuesForMissingInterfaceTypes()
         {
             // Interface types may be missing if the grain definition was updated.
             var oldQueues = this.WorkflowQueues;
-            this.WorkflowQueues = oldQueues.Where(kvp => base._grainIndexes.ContainsInterface(kvp.Key)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            this.WorkflowQueues = oldQueues.Where(kvp => base.grainIndexes.ContainsInterface(kvp.Key)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public override Task<Immutable<HashSet<Guid>>> GetActiveWorkflowIdsSet()
@@ -257,7 +259,7 @@ namespace Orleans.Indexing.Facet
         /// Adds a workflow ID to the list of active workflows for this fault-tolerant indexable grain
         /// </summary>
         /// <param name="workflowIds">the workflow IDs to be added</param>
-        private void AddWorkflowIdsToActiveWorkflows(Guid[] workflowIds)
+        void AddWorkflowIdsToActiveWorkflows(Guid[] workflowIds)
         {
             if (this.ActiveWorkflowsSet == null)
             {
@@ -281,7 +283,7 @@ namespace Orleans.Indexing.Facet
         /// The only way to avoid it is using a centralized unique workflow ID generator, which can be added if necessary.
         /// </summary>
         /// <returns>a new unique workflow ID</returns>
-        private Guid GenerateUniqueWorkflowId()
+        Guid GenerateUniqueWorkflowId()
         {
             var workflowId = Guid.NewGuid();
             while (this.ActiveWorkflowsSet != null && this.ActiveWorkflowsSet.Contains(workflowId))

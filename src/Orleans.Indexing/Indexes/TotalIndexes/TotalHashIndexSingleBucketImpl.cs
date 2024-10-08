@@ -11,7 +11,8 @@ namespace Orleans.Indexing
     /// <typeparam name="K">type of hash-index key</typeparam>
     /// <typeparam name="V">type of grain that is being indexed</typeparam>
     [Reentrant]
-    public class TotalHashIndexSingleBucketImpl<K, V> : HashIndexSingleBucket<K, V>, ITotalHashIndexSingleBucket<K, V>
+    public class TotalHashIndexSingleBucketImpl<K, V> : HashIndexSingleBucket<K, V>,
+                                                        ITotalHashIndexSingleBucket<K, V>
                                                         where V : class, IIndexableGrain
     {
         public TotalHashIndexSingleBucketImpl() : base(IndexingConstants.INDEXING_STORAGE_PROVIDER_NAME) { }

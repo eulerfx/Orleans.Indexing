@@ -16,8 +16,7 @@ namespace Orleans.Indexing
         /// <param name="filterExpr">the filter expression of the query</param>
         /// <param name="queryResultObserver">the observer object to be called on every grain found for the query</param>
         /// <returns>the result of the query</returns>
-        Task GetActiveGrains<TIGrain, TProperties>(Expression<Func<TProperties, bool>> filterExpr,
-                                IAsyncBatchObserver<TIGrain> queryResultObserver) where TIGrain : IIndexableGrain;
+        Task GetActiveGrains<TIGrain, TProperties>(Expression<Func<TProperties, bool>> filterExpr, IAsyncBatchObserver<TIGrain> queryResultObserver) where TIGrain : IIndexableGrain;
 
         /// <summary>
         /// This method queries the active grains for the given grain interface and the filter expression. The filter
@@ -29,8 +28,7 @@ namespace Orleans.Indexing
         /// <param name="filterExpr">the filter expression of the query</param>
         /// <param name="queryResultObserver">the observer object to be called on every grain found for the query</param>
         /// <returns>the result of the query</returns>
-        Task GetActiveGrains<TIGrain, TProperties>(IStreamProvider streamProvider,
-                                Expression<Func<TProperties, bool>> filterExpr, IAsyncBatchObserver<TIGrain> queryResultObserver) where TIGrain : IIndexableGrain;
+        Task GetActiveGrains<TIGrain, TProperties>(IStreamProvider streamProvider, Expression<Func<TProperties, bool>> filterExpr, IAsyncBatchObserver<TIGrain> queryResultObserver) where TIGrain : IIndexableGrain;
 
         /// <summary>
         /// This method queries the active grains for the given grain interface.

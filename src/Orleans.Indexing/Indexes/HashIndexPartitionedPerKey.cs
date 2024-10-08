@@ -15,15 +15,14 @@ namespace Orleans.Indexing
     /// <typeparam name="K">type of hash-index key</typeparam>
     /// <typeparam name="V">type of grain interface that is being indexed</typeparam>
     /// <typeparam name="BucketT">type of bucket for the index</typeparam>
-    public abstract class HashIndexPartitionedPerKey<K, V, BucketT> : IHashIndexInterface<K, V> where V : class, IIndexableGrain
-        where BucketT : IHashIndexPartitionedPerKeyBucketInterface<K, V>, IGrainWithStringKey
+    public abstract class HashIndexPartitionedPerKey<K, V, BucketT> : IHashIndexInterface<K, V> where V : class, IIndexableGrain where BucketT : IHashIndexPartitionedPerKeyBucketInterface<K, V>, IGrainWithStringKey
     {
-        private string _indexName;
-        private bool isTransactional = false;
+        string _indexName;
+        bool isTransactional = false;
 
-        private readonly IndexManager indexManager;
-        private readonly ILogger logger;
-        private int maxHashBuckets;
+        readonly IndexManager indexManager;
+        readonly ILogger logger;
+        int maxHashBuckets;
 
         public HashIndexPartitionedPerKey(IServiceProvider serviceProvider, string indexName, bool isUniqueIndex, bool isTransactional = false)
         {
@@ -39,8 +38,8 @@ namespace Orleans.Indexing
             logger.Trace(IndexingErrorCode.Indexing, $"Started calling DirectApplyIndexUpdateBatch with the following parameters: isUnique = {isUnique}, siloAddress = {siloAddress}," +
                                                     $" iUpdates = {MemberUpdate.UpdatesToString(iUpdates.Value)}");
 
-            IDictionary<IIndexableGrain, IList<IMemberUpdate>> updates = iUpdates.Value;
-            IDictionary<int, IDictionary<IIndexableGrain, IList<IMemberUpdate>>> bucketUpdates = new Dictionary<int, IDictionary<IIndexableGrain, IList<IMemberUpdate>>>();
+            var updates = iUpdates.Value;
+            var bucketUpdates = new Dictionary<int, IDictionary<IIndexableGrain, IList<IMemberUpdate>>>();
 
             void AddUpdateToBucket(IIndexableGrain g, int bucket, IMemberUpdate update)
             {
@@ -49,44 +48,40 @@ namespace Orleans.Indexing
                 bucketUpdatesList.Add(update);
             }
 
-            foreach (var kv in updates)
+            foreach (var (grain, grainUpdates) in updates)
             {
-                IIndexableGrain g = kv.Key;
-                IList<IMemberUpdate> gUpdates = kv.Value;
-                foreach (IMemberUpdate update in gUpdates)
+                foreach (var update in grainUpdates)
                 {
-                    IndexOperationType opType = update.OperationType;
-                    if (opType == IndexOperationType.Update)
+                    if (update.OperationType == IndexOperationType.Update)
                     {
-                        int befImgHash = GetBucketIndexFromHashCode(update.GetBeforeImage());
-                        int aftImgHash = GetBucketIndexFromHashCode(update.GetAfterImage());
-
+                        var befImgHash = GetBucketIndexFromHashCode(update.GetBeforeImage());
+                        var aftImgHash = GetBucketIndexFromHashCode(update.GetAfterImage());
                         if (befImgHash == aftImgHash)
                         {
-                            AddUpdateToBucket(g, befImgHash, update);
+                            AddUpdateToBucket(grain, befImgHash, update);
                         }
                         else
                         {
-                            AddUpdateToBucket(g, befImgHash, new MemberUpdateOverriddenOperation(update, IndexOperationType.Delete));
-                            AddUpdateToBucket(g, aftImgHash, new MemberUpdateOverriddenOperation(update, IndexOperationType.Insert));
+                            AddUpdateToBucket(grain, befImgHash, new MemberUpdateOverriddenOperation(update, IndexOperationType.Delete));
+                            AddUpdateToBucket(grain, aftImgHash, new MemberUpdateOverriddenOperation(update, IndexOperationType.Insert));
                         }
                     }
-                    else if (opType == IndexOperationType.Insert)
+                    else if (update.OperationType == IndexOperationType.Insert)
                     {
-                        int aftImgHash = GetBucketIndexFromHashCode(update.GetAfterImage());
-                        AddUpdateToBucket(g, aftImgHash, update);
+                        var aftImgHash = GetBucketIndexFromHashCode(update.GetAfterImage());
+                        AddUpdateToBucket(grain, aftImgHash, update);
                     }
-                    else if (opType == IndexOperationType.Delete)
+                    else if (update.OperationType == IndexOperationType.Delete)
                     {
-                        int befImgHash = GetBucketIndexFromHashCode(update.GetBeforeImage());
-                        AddUpdateToBucket(g, befImgHash, update);
+                        var befImgHash = GetBucketIndexFromHashCode(update.GetBeforeImage());
+                        AddUpdateToBucket(grain, befImgHash, update);
                     }
                 }
             }
 
             var results = await Task.WhenAll(bucketUpdates.Select(kv =>
             {
-                BucketT bucket = this.GetBucketGrain(kv.Key);
+                var bucket = this.GetBucketGrain(kv.Key);
                 return bucket.DirectApplyIndexUpdateBatch(kv.Value.AsImmutable(), isUnique, idxMetaData, siloAddress);
             }));
 
@@ -95,7 +90,7 @@ namespace Orleans.Indexing
             return true;
         }
 
-        private BucketT GetBucketGrain(int keyValueHash)
+        BucketT GetBucketGrain(int keyValueHash)
         {
             var bucketPrimaryKey = IndexUtils.GetIndexGrainPrimaryKey(typeof(V), this._indexName) + "_" + keyValueHash;
             return this.indexManager.GrainFactory.GetGrain<BucketT>(bucketPrimaryKey);
@@ -141,7 +136,7 @@ namespace Orleans.Indexing
             logger.Trace($"Streamed index lookup called for key = {key}");
 
             var keyHash = GetBucketIndexFromHashCode(key);
-            BucketT targetBucket = this.GetBucketGrain(keyHash);
+            var targetBucket = this.GetBucketGrain(keyHash);
             return isTransactional ? ((ITransactionalLookupIndex<K, V>)targetBucket).LookupTransactionalAsync(result, key)
                                    : targetBucket.LookupAsync(result, key);
         }
@@ -166,7 +161,7 @@ namespace Orleans.Indexing
 
         public Task<bool> IsAvailable() => Task.FromResult(true);
 
-        private int GetBucketIndexFromHashCode<T>(T img)
+        int GetBucketIndexFromHashCode<T>(T img)
         {
             // HashIndexSingleBucketEntry uses a HashSet of GrainReference, which has its own GetHashCode,
             // so hash flooding with string key values is not an issue and we can use a non-randomized hashcode.

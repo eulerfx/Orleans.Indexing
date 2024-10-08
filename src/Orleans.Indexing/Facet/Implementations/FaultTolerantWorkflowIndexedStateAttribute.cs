@@ -13,9 +13,6 @@ namespace Orleans.Indexing.Facet
     /// Base class for the IIndexedState facet that is implemented by fault-tolerant workflow-based indexing.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
-    public class FaultTolerantWorkflowIndexedStateAttribute : IndexedStateAttribute, IFacetMetadata, IFaultTolerantWorkflowIndexedStateAttribute, IIndexedStateConfiguration
-    {
-        public FaultTolerantWorkflowIndexedStateAttribute(string stateName, string storageName = null)
-            : base(stateName, storageName) { }
-    }
+    public class FaultTolerantWorkflowIndexedStateAttribute(string stateName, string storageName = null) :
+        IndexedStateAttribute(stateName, storageName), IFacetMetadata, IFaultTolerantWorkflowIndexedStateAttribute, IIndexedStateConfiguration;
 }

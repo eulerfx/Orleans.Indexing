@@ -39,8 +39,7 @@ namespace Orleans.Indexing
         /// <param name="filterExpr">the filter expression of the query</param>
         /// <param name="queryResultObserver">the observer object to be called on every grain found for the query</param>
         /// <returns>the result of the query</returns>
-        public Task GetActiveGrains<TIGrain, TProperties>(Expression<Func<TProperties, bool>> filterExpr,
-                                IAsyncBatchObserver<TIGrain> queryResultObserver) where TIGrain : IIndexableGrain
+        public Task GetActiveGrains<TIGrain, TProperties>(Expression<Func<TProperties, bool>> filterExpr, IAsyncBatchObserver<TIGrain> queryResultObserver) where TIGrain : IIndexableGrain
             => this.GetActiveGrains<TIGrain, TProperties>().Where(filterExpr).ObserveResults(queryResultObserver);
 
         /// <summary>
@@ -53,8 +52,7 @@ namespace Orleans.Indexing
         /// <param name="filterExpr">the filter expression of the query</param>
         /// <param name="queryResultObserver">the observer object to be called on every grain found for the query</param>
         /// <returns>the result of the query</returns>
-        public Task GetActiveGrains<TIGrain, TProperties>(IStreamProvider streamProvider,
-                                Expression<Func<TProperties, bool>> filterExpr, IAsyncBatchObserver<TIGrain> queryResultObserver) where TIGrain : IIndexableGrain
+        public Task GetActiveGrains<TIGrain, TProperties>(IStreamProvider streamProvider, Expression<Func<TProperties, bool>> filterExpr, IAsyncBatchObserver<TIGrain> queryResultObserver) where TIGrain : IIndexableGrain
             => this.GetActiveGrains<TIGrain, TProperties>(streamProvider).Where(filterExpr).ObserveResults(queryResultObserver);
 
         /// <summary>
@@ -159,7 +157,7 @@ namespace Orleans.Indexing
 
         internal static void RegisterIndexWorkflowQueueGrainServices(IServiceCollection services, Type grainInterfaceType, IndexingOptions indexingOptions, bool isFaultTolerant)
         {
-            for (int i = 0; i < indexingOptions.NumWorkflowQueuesPerInterface; ++i)
+            for (var i = 0; i < indexingOptions.NumWorkflowQueuesPerInterface; ++i)
             {
                 var seq = i;    // Captured by the lambda
                 services.AddGrainService(sp => new IndexWorkflowQueueGrainService(sp.GetRequiredService<SiloIndexManager>(), grainInterfaceType, seq, isFaultTolerant));
@@ -171,8 +169,7 @@ namespace Orleans.Indexing
 
         #region private functions
 
-        private static IIndexUpdateGenerator CreateIndexUpdateGenFromProperty(PropertyInfo indexedProperty)
-            => new IndexUpdateGenerator(indexedProperty);
+        static IIndexUpdateGenerator CreateIndexUpdateGenFromProperty(PropertyInfo indexedProperty) => new IndexUpdateGenerator(indexedProperty);
 
         #endregion private functions
     }

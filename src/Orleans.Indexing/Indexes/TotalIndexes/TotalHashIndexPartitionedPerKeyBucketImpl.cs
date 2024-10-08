@@ -6,7 +6,7 @@ namespace Orleans.Indexing
 {
     /// <summary>
     /// A simple implementation of a single-bucket persistent hash-index
-    /// 
+    ///
     /// </summary>
     /// <typeparam name="K">type of hash-index key</typeparam>
     /// <typeparam name="V">type of grain that is being indexed</typeparam>
@@ -19,7 +19,8 @@ namespace Orleans.Indexing
 
         internal override GrainReference GetNextBucket(out IIndexInterface<K, V> nextBucketIndexInterface)
         {
-            var nextBucket = GrainFactory.GetGrain<TotalHashIndexPartitionedPerKeyBucketImpl<K, V>>(IndexUtils.GetNextIndexBucketIdInChain(this.AsWeaklyTypedReference()));
+            //var nextBucket = GrainFactory.GetGrain<TotalHashIndexPartitionedPerKeyBucketImpl<K, V>>(IndexUtils.GetNextIndexBucketIdInChain(this.AsWeaklyTypedReference()));
+            var nextBucket = GrainFactory.GetGrain<ITotalHashIndexPartitionedPerKeyBucket<K, V>>(IndexUtils.GetNextIndexBucketIdInChain(this.AsWeaklyTypedReference()));
             nextBucketIndexInterface = nextBucket;
             return nextBucket.AsWeaklyTypedReference();
         }

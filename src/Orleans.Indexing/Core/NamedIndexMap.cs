@@ -7,7 +7,7 @@ namespace Orleans.Indexing
 {
     internal class NamedIndexMap : IEnumerable<KeyValuePair<string, IndexInfo>>
     {
-        private IDictionary<string, IndexInfo> IndexesByName { get; set; } = new Dictionary<string, IndexInfo>();
+        IDictionary<string, IndexInfo> IndexesByName { get; set; } = new Dictionary<string, IndexInfo>();
 
         internal Type PropertiesClassType { get; }
 

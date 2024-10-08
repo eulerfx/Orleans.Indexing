@@ -5,12 +5,10 @@ namespace Orleans.Indexing
 {
     internal class IndexRegistry
     {
-        private IDictionary<Type, NamedIndexMap> IndexesByInterfaceType { get; set; } = new Dictionary<Type, NamedIndexMap>();
-
-        private IDictionary<Type, Type[]> IndexedInterfacesByGrainType = new Dictionary<Type, Type[]>();
-        private IDictionary<Type, List<Type>> IndexedInterfaceToGrainTypes = new Dictionary<Type, List<Type>>();
-
-        private IDictionary<Type, IReadOnlyDictionary<string, object>> GrainsToPropertyNullValues = new Dictionary<Type, IReadOnlyDictionary<string, object>>();
+        IDictionary<Type, NamedIndexMap> IndexesByInterfaceType { get; set; } = new Dictionary<Type, NamedIndexMap>();
+        IDictionary<Type, Type[]> IndexedInterfacesByGrainType = new Dictionary<Type, Type[]>();
+        IDictionary<Type, List<Type>> IndexedInterfaceToGrainTypes = new Dictionary<Type, List<Type>>();
+        IDictionary<Type, IReadOnlyDictionary<string, object>> GrainsToPropertyNullValues = new Dictionary<Type, IReadOnlyDictionary<string, object>>();
 
         internal static IReadOnlyDictionary<string, object> EmptyPropertyNullValues { get; } = new Dictionary<string, object>();
 
@@ -26,7 +24,7 @@ namespace Orleans.Indexing
         internal bool ContainsKey(Type interfaceType) => this.IndexesByInterfaceType.ContainsKey(interfaceType);
 
         internal void SetGrainIndexes(Type grainClassType, Type[] indexedInterfaces, IReadOnlyDictionary<string, object> nullValuesDictionary)
-        { 
+        {
             this.IndexedInterfacesByGrainType[grainClassType] = indexedInterfaces;
             foreach (var indexedInterface in indexedInterfaces) {
                 this.IndexedInterfaceToGrainTypes.GetOrAdd(indexedInterface, new List<Type>()).Add(grainClassType);

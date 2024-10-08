@@ -10,7 +10,7 @@ namespace Orleans.Indexing.Tests
 {
     public static class IndexingTestUtils
     {
-        public static async Task<int> CountItemsStreamingIn<TIGrain, TProperties, TQueryProp>(this IndexingTestRunnerBase runner,
+        static async Task<int> CountItemsStreamingIn<TIGrain, TProperties, TQueryProp>(this IndexingTestRunnerBase runner,
                                                                 Func<IndexingTestRunnerBase, TQueryProp, Tuple<IOrleansQueryable<TIGrain, TProperties>, Func<TIGrain, Task<TQueryProp>>>> queryTupleFunc,
                                                                 string propertyName, TQueryProp queryValue, int delayInMilliseconds = 0)
             where TIGrain : IIndexableGrain
@@ -29,7 +29,7 @@ namespace Orleans.Indexing.Tests
             await queryItems.ObserveResults(new QueryResultStreamObserver<TIGrain>(/*async*/ entry =>
             {
                 counter++;
- 
+
                 // For Total indexes, the grain may not be active; querying the property will activate it. If we have a mix of Active and Total
                 // indexes on a grain, this will cause the Active counts to be incorrect during testing. TODO: specify per-test whether to retrieve this
                 var isActiveIndex = runner.IndexFactory.GetIndex(typeof(TIGrain), IndexUtils.PropertyNameToIndexName(propertyName)).IsActiveIndex();
@@ -47,8 +47,7 @@ namespace Orleans.Indexing.Tests
             return observedCount;
         }
 
-        internal static async Task SetPropertyAndWriteStateAsync<TGrainState>(Action<TGrainState> setterAction, IIndexedState<TGrainState> indexedState, bool retry)
-            where TGrainState: class, new()
+        internal static async Task SetPropertyAndWriteStateAsync<TGrainState>(Action<TGrainState> setterAction, IIndexedState<TGrainState> indexedState, bool retry) where TGrainState: class, new()
         {
             const int MaxRetries = 10;
             int retries = 0;

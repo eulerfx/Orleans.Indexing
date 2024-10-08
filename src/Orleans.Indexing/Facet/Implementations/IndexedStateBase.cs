@@ -9,35 +9,26 @@ using Orleans.Runtime;
 
 namespace Orleans.Indexing.Facet
 {
-    abstract class IndexedStateBase<TGrainState> : IIndexedState<TGrainState> where TGrainState : class, new()
+    abstract class IndexedStateBase<TGrainState>(IServiceProvider sp, IIndexedStateConfiguration config, IGrainContext context)
+        : IIndexedState<TGrainState> where TGrainState : class, new()
     {
-        private protected readonly IServiceProvider ServiceProvider;
-        private protected readonly IIndexedStateConfiguration IndexedStateConfig;
-        private protected readonly IGrainContext grainActivationContext;
-
-        private protected Grain grain;
-        private protected IIndexableGrain iIndexableGrain;
-
-        private protected Func<Guid> getWorkflowIdFunc;
-
-        private protected GrainIndexes _grainIndexes;
-        private protected bool _hasAnyUniqueIndex;
-
-        public IndexedStateBase(IServiceProvider sp, IIndexedStateConfiguration config, IGrainContext context)
-        {
-            this.ServiceProvider = sp;
-            this.IndexedStateConfig = config;
-            this.grainActivationContext = context;
-        }
+        readonly IServiceProvider ServiceProvider = sp;
+        protected readonly IIndexedStateConfiguration IndexedStateConfig = config;
+        protected readonly IGrainContext grainActivationContext = context;
+        protected Grain grain;
+        protected IIndexableGrain iIndexableGrain;
+        protected Func<Guid> getWorkflowIdFunc;
+        protected GrainIndexes grainIndexes;
+        bool _hasAnyUniqueIndex;
 
         // IndexManager (and therefore logger) cannot be set in ctor because Grain activation has not yet set base.Runtime.
-        internal SiloIndexManager SiloIndexManager => IndexManager.GetSiloIndexManager(ref this.__siloIndexManager, this.ServiceProvider);
-        private SiloIndexManager __siloIndexManager;
+        internal SiloIndexManager SiloIndexManager => IndexManager.GetSiloIndexManager(ref this.siloIndexManager, this.ServiceProvider);
+        SiloIndexManager siloIndexManager;
 
-        private protected ILogger Logger => this.__logger ?? (this.__logger = this.SiloIndexManager.LoggerFactory.CreateLoggerWithFullCategoryName(this.GetType()));
-        private ILogger __logger;
+        protected ILogger Logger => this.__logger ??= this.SiloIndexManager.LoggerFactory.CreateLoggerWithFullCategoryName(this.GetType());
+        ILogger __logger;
 
-        private protected SiloAddress BaseSiloAddress => this.SiloIndexManager.SiloAddress;
+        protected SiloAddress BaseSiloAddress => this.SiloIndexManager.SiloAddress;
 
         #region public API
 
@@ -49,13 +40,13 @@ namespace Orleans.Indexing.Facet
 
         #region Lifecycle management
 
-        public void Participate<TSubclass>(IGrainLifecycle lifecycle)
+        protected void Participate<TSubclass>(IGrainLifecycle lifecycle)
         {
-            lifecycle.Subscribe<TSubclass>(GrainLifecycleStage.SetupState, _ => OnSetupStateAsync());
-            lifecycle.Subscribe<TSubclass>(GrainLifecycleStage.Activate, ct => OnActivateAsync(ct), ct => OnDeactivateAsync(ct));
+            lifecycle.Subscribe<TSubclass>(GrainLifecycleStage.SetupState, onStart: _ => OnSetupStateAsync());
+            lifecycle.Subscribe<TSubclass>(GrainLifecycleStage.Activate, onStart: ct => OnActivateAsync(ct), onStop: ct => OnDeactivateAsync(ct));
         }
 
-        private protected Task OnSetupStateAsync() => this.Initialize(this.grain);
+        Task OnSetupStateAsync() => this.Initialize(this.grain);
 
         internal abstract Task OnActivateAsync(CancellationToken ct);
 
@@ -63,20 +54,20 @@ namespace Orleans.Indexing.Facet
 
         #endregion Lifecycle management
 
-        private Task Initialize(Grain grain)
+        Task Initialize(Grain grain)
         {
-            if (this.grain == null) // If not already called
+            if (this.grain != null) // If not already called
             {
-                this.grain = grain;
-                this.iIndexableGrain = this.grain.AsReference<IIndexableGrain>(this.SiloIndexManager);
-
-                if (!GrainIndexes.CreateInstance(this.SiloIndexManager.IndexRegistry, this.grain.GetType(), out this._grainIndexes)
-                    || !this._grainIndexes.HasAnyIndexes)
-                {
-                    throw new InvalidOperationException("IndexedState should not be used for a Grain class with no indexes");
-                }
-                this._hasAnyUniqueIndex = this._grainIndexes.HasAnyUniqueIndex;
+                return Task.CompletedTask;
             }
+
+            this.grain = grain;
+            this.iIndexableGrain = this.grain.AsReference<IIndexableGrain>(this.SiloIndexManager);
+            if (!GrainIndexes.CreateInstance(this.SiloIndexManager.IndexRegistry, this.grain.GetType(), out this.grainIndexes) || !this.grainIndexes.HasAnyIndexes)
+            {
+                throw new InvalidOperationException("IndexedState should not be used for a Grain class with no indexes");
+            }
+            this._hasAnyUniqueIndex = this.grainIndexes.HasAnyUniqueIndex;
             return Task.CompletedTask;
         }
 
@@ -96,18 +87,16 @@ namespace Orleans.Indexing.Facet
         /// <param name="updateReason">Determines whether this method is called upon activation, deactivation, or still-active state of this grain</param>
         /// <param name="onlyUpdateActiveIndexes">whether only active indexes should be updated</param>
         /// <param name="writeStateIfConstraintsAreNotViolated">whether to write back the state to the storage if no constraint is violated</param>
-        private protected async Task<InterfaceToUpdatesMap> UpdateIndexes(IndexUpdateReason updateReason, bool onlyUpdateActiveIndexes, bool writeStateIfConstraintsAreNotViolated)
+        protected async Task<InterfaceToUpdatesMap> UpdateIndexes(IndexUpdateReason updateReason, bool onlyUpdateActiveIndexes, bool writeStateIfConstraintsAreNotViolated)
         {
             // A flag to determine whether only unique indexes were updated
             var onlyUniqueIndexesWereUpdated = this._hasAnyUniqueIndex;
 
             // Gather the dictionary of indexes to their corresponding updates, grouped by interface
-            var interfaceToUpdatesMap = this.GenerateMemberUpdates(updateReason, onlyUpdateActiveIndexes,
-                out var updateIndexesEagerly, ref onlyUniqueIndexesWereUpdated, out var numberOfUniqueIndexesUpdated);
+            var interfaceToUpdatesMap = this.GenerateMemberUpdates(updateReason, onlyUpdateActiveIndexes, out var updateIndexesEagerly, ref onlyUniqueIndexesWereUpdated, out var numberOfUniqueIndexesUpdated);
 
             // Apply the updates to the indexes defined on this grain
-            await this.ApplyIndexUpdates(interfaceToUpdatesMap, updateIndexesEagerly,
-                onlyUniqueIndexesWereUpdated, numberOfUniqueIndexesUpdated, writeStateIfConstraintsAreNotViolated);
+            await this.ApplyIndexUpdates(interfaceToUpdatesMap, updateIndexesEagerly, onlyUniqueIndexesWereUpdated, numberOfUniqueIndexesUpdated, writeStateIfConstraintsAreNotViolated);
             return interfaceToUpdatesMap;
         }
 
@@ -120,30 +109,35 @@ namespace Orleans.Indexing.Facet
         /// <param name="numberOfUniqueIndexesUpdated">determine the number of updated unique indexes</param>
         /// <param name="writeStateIfConstraintsAreNotViolated">whether writing back
         ///             the state to the storage should be done if no constraint is violated</param>
-        private protected abstract Task ApplyIndexUpdates(InterfaceToUpdatesMap interfaceToUpdatesMap,
+        protected abstract Task ApplyIndexUpdates(InterfaceToUpdatesMap interfaceToUpdatesMap,
                                                   bool updateIndexesEagerly, bool onlyUniqueIndexesWereUpdated,
                                                   int numberOfUniqueIndexesUpdated, bool writeStateIfConstraintsAreNotViolated);
 
-        private InterfaceToUpdatesMap GenerateMemberUpdates(IndexUpdateReason updateReason,
-                                                            bool onlyUpdateActiveIndexes, out bool updateIndexesEagerly,
-                                                            ref bool onlyUniqueIndexesWereUpdated, out int numberOfUniqueIndexesUpdated)
+        InterfaceToUpdatesMap GenerateMemberUpdates(IndexUpdateReason updateReason, bool onlyUpdateActiveIndexes, out bool updateIndexesEagerly, ref bool onlyUniqueIndexesWereUpdated, out int numberOfUniqueIndexesUpdated)
         {
             (string prevIndexName, var prevIndexIsEager) = (null, false);
-
-            var numUniqueIndexes = 0;       // Local vars due to restrictions on local functions accessing ref/out params
+            var numUniqueIndexes = 0;
             var onlyUniqueIndexes = true;
+            var interfaceToUpdatesMap = new InterfaceToUpdatesMap(
+                updateReason,
+                this.getWorkflowIdFunc,
+                this.grainIndexes.Select(kvp => (kvp.Key, generateNamedMemberUpdates(kvp.Key, indexes: kvp.Value)))
+                );
+            updateIndexesEagerly = prevIndexName != null && prevIndexIsEager;
+            numberOfUniqueIndexesUpdated = numUniqueIndexes;
+            onlyUniqueIndexesWereUpdated = onlyUniqueIndexes;
+            return interfaceToUpdatesMap;
 
             IEnumerable<(string indexName, IMemberUpdate mu)> generateNamedMemberUpdates(Type interfaceType, InterfaceIndexes indexes)
             {
                 var befImgs = indexes.BeforeImages.Value;
-                foreach ((var indexName, var indexInfo) in indexes.NamedIndexes
-                                                                  .Where(kvp => !onlyUpdateActiveIndexes || !kvp.Value.IndexInterface.IsTotalIndex())
-                                                                  .Select(kvp => (kvp.Key, kvp.Value)))
+                foreach (var (indexName, indexInfo) in indexes.NamedIndexes
+                             .Where(kvp => !onlyUpdateActiveIndexes || !kvp.Value.IndexInterface.IsTotalIndex())
+                             .Select(kvp => (kvp.Key, kvp.Value)))
                 {
                     var mu = updateReason == IndexUpdateReason.OnActivate
-                                            ? indexInfo.UpdateGenerator.CreateMemberUpdate(befImgs[indexName])
-                                            : indexInfo.UpdateGenerator.CreateMemberUpdate(
-                                                updateReason == IndexUpdateReason.OnDeactivate ? null : indexes.Properties, befImgs[indexName]);
+                        ? indexInfo.UpdateGenerator.CreateMemberUpdate(befImgs[indexName])
+                        : indexInfo.UpdateGenerator.CreateMemberUpdate(updateReason == IndexUpdateReason.OnDeactivate ? null : indexes.Properties, befImgs[indexName]);
                     if (mu.OperationType != IndexOperationType.None)
                     {
                         if (prevIndexName != null && prevIndexIsEager != indexInfo.MetaData.IsEager)
@@ -168,17 +162,11 @@ namespace Orleans.Indexing.Facet
                     }
                 }
             }
-
-            var interfaceToUpdatesMap = new InterfaceToUpdatesMap(updateReason, this.getWorkflowIdFunc,
-                                                                  this._grainIndexes.Select(kvp => (kvp.Key, generateNamedMemberUpdates(kvp.Key, kvp.Value))));
-            updateIndexesEagerly = prevIndexName != null ? prevIndexIsEager : false;
-            numberOfUniqueIndexesUpdated = numUniqueIndexes;
-            onlyUniqueIndexesWereUpdated = onlyUniqueIndexes;
-            return interfaceToUpdatesMap;
         }
 
         // IIndexableGrain methods; these are overridden only by FaultTolerantWorkflowIndexedState.  TODO move to FT only
         public virtual Task<Immutable<HashSet<Guid>>> GetActiveWorkflowIdsSet() => throw new NotImplementedException("GetActiveWorkflowIdsSet");
+
         public virtual Task RemoveFromActiveWorkflowIds(HashSet<Guid> removedWorkflowIds) => throw new NotImplementedException("RemoveFromActiveWorkflowIds");
     }
 }

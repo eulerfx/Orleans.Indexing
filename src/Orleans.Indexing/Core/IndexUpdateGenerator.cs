@@ -21,7 +21,7 @@ namespace Orleans.Indexing
 
         public IMemberUpdate CreateMemberUpdate(object gProps, object befImg)
         {
-            object aftImg = gProps == null ? null : ExtractIndexImage(gProps);
+            var aftImg = gProps == null ? null : ExtractIndexImage(gProps);
             return new MemberUpdate(befImg, aftImg);
         }
 

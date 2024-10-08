@@ -5,7 +5,13 @@ using System.Threading.Tasks;
 
 namespace Orleans.Indexing
 {
-    public enum IndexStatus { /*Created,*/ UnderConstruction, Available, Disposed }
+    public enum IndexStatus
+    {
+        /*Created,*/
+        UnderConstruction,
+        Available,
+        Disposed
+    }
 
     /// <summary>
     /// This interface defines the functionality that is required for an index implementation.
@@ -64,7 +70,7 @@ namespace Orleans.Indexing
 
         /// <summary>
         /// This method is used for extracting the whole result of a lookup from an ActiveHashIndexPartitionedPerSiloBucket.
-        /// 
+        ///
         /// TODO: This should not be necessary if we could call streams from within a GrainService, and the stream were efficient enough
         /// </summary>
         /// <param name="key">the lookup key</param>
@@ -79,7 +85,7 @@ namespace Orleans.Indexing
     /// This is the typed variant of IndexInterface, which is assumed to be the root interface for the index implementations.
     /// </summary>
     [Unordered]
-    public interface IIndexInterface<K, V> : IIndexInterface where V : IIndexableGrain
+    public interface  IIndexInterface<K, V> : IIndexInterface where V : IIndexableGrain
     {
         /// <summary>
         /// This method retrieves the result of a lookup into the hash-index
@@ -94,7 +100,7 @@ namespace Orleans.Indexing
 
         /// <summary>
         /// This method is used for extracting the whole result of a lookup from an ActiveHashIndexPartitionedPerSiloBucket.
-        /// 
+        ///
         /// TODO: This should not be necessary if we could call streams from within a GrainService, and the stream were efficient enough
         /// </summary>
         /// <param name="key">the lookup key</param>

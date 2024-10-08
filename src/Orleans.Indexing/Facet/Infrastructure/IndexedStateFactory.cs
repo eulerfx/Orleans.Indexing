@@ -23,7 +23,7 @@ namespace Orleans.Indexing.Facet
             where TState : class, new()
             => this.CreateIndexedState<TransactionalIndexedState<TState>>(config);
 
-        private TWrappedIndexedStateImplementation CreateIndexedState<TWrappedIndexedStateImplementation>(IIndexedStateConfiguration config)
+        TWrappedIndexedStateImplementation CreateIndexedState<TWrappedIndexedStateImplementation>(IIndexedStateConfiguration config)
             where TWrappedIndexedStateImplementation : ILifecycleParticipant<IGrainLifecycle>
         {
             var indexedState = ActivatorUtilities.CreateInstance<TWrappedIndexedStateImplementation>(this.activationContext.ActivationServices, config);

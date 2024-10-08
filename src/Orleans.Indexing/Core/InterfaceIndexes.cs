@@ -7,8 +7,19 @@ namespace Orleans.Indexing
 {
     internal class InterfaceIndexes
     {
+        /// <summary>
+        /// The indexes defined on the indexable object.
+        /// </summary>
         internal NamedIndexMap NamedIndexes { get; }
+
+        /// <summary>
+        /// The indexed properties object.
+        /// </summary>
         internal object Properties { get; set; }
+
+        /// <summary>
+        /// The type of the indexed properties object.
+        /// </summary>
         internal Type PropertiesType => this.NamedIndexes.PropertiesClassType;
 
         /// <summary>

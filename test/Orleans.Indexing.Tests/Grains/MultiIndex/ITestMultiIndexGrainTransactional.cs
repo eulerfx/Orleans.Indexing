@@ -11,6 +11,7 @@ namespace Orleans.Indexing.Tests
 
         [Transaction(TransactionOption.CreateOrJoin, ReadOnly = true)]
         Task<int> GetUniqueInt();
+
         [Transaction(TransactionOption.CreateOrJoin)]
         Task SetUniqueInt(int value);
 

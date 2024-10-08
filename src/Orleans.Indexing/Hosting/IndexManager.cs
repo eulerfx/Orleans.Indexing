@@ -14,8 +14,6 @@ namespace Orleans.Indexing
     /// </summary>
     internal class IndexManager : ILifecycleParticipant<IClusterClientLifecycle>
     {
-        //internal IApplicationPartManager ApplicationPartManager;
-
         internal TypeResolver CachedTypeResolver { get; }
 
         internal IndexRegistry IndexRegistry { get; private set; }
@@ -28,12 +26,14 @@ namespace Orleans.Indexing
 
         // Note: For similar reasons as SiloIndexManager.__silo, __indexFactory relies on 'this' to have returned from its ctor.
         internal IndexFactory IndexFactory => this.__indexFactory ?? (__indexFactory = this.ServiceProvider.GetRequiredService<IndexFactory>());
-        private IndexFactory __indexFactory;
+        IndexFactory __indexFactory;
 
         internal ILoggerFactory LoggerFactory { get; }
 
         public IndexManager(IServiceProvider sp, IGrainFactory gf, ILoggerFactory lf, TypeResolver typeResolver)
         {
+
+
             this.ServiceProvider = sp;
             this.GrainFactory = gf;
             this.LoggerFactory = lf;
@@ -44,7 +44,7 @@ namespace Orleans.Indexing
 
         public void Participate(IClusterClientLifecycle lifecycle)
         {
-            if (!(this is SiloIndexManager))
+            if (this is not SiloIndexManager)
             {
                 lifecycle.Subscribe(this.GetType().FullName, ServiceLifecycleStage.ApplicationServices, ct => this.OnStartAsync(ct), ct => this.OnStopAsync(ct));
             }

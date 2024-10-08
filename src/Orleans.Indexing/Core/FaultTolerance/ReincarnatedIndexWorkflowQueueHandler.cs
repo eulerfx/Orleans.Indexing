@@ -10,10 +10,10 @@ namespace Orleans.Indexing
     [Reentrant]
     internal class ReincarnatedIndexWorkflowQueueHandler : Grain, IIndexWorkflowQueueHandler
     {
-        private IIndexWorkflowQueueHandler _base;
+        IIndexWorkflowQueueHandler _base;
 
         internal SiloIndexManager SiloIndexManager => IndexManager.GetSiloIndexManager(ref __siloIndexManager, base.ServiceProvider);
-        private SiloIndexManager __siloIndexManager;
+        SiloIndexManager __siloIndexManager;
 
         public override Task OnActivateAsync(CancellationToken ct)
         {
@@ -23,7 +23,7 @@ namespace Orleans.Indexing
 
         public Task Initialize(IIndexWorkflowQueue oldParentGrainService)
         {
-            if (_base == null)
+            if (_base is null)
             {
                 var oldParentGrainServiceRef = oldParentGrainService.AsWeaklyTypedReference();
                 var parts = oldParentGrainServiceRef.GetPrimaryKeyString().Split('-');
@@ -33,13 +33,13 @@ namespace Orleans.Indexing
                                                      " The primary key is '" + oldParentGrainServiceRef.GetPrimaryKeyString() + "'");
                 }
 
-                Type grainInterfaceType = this.SiloIndexManager.CachedTypeResolver.ResolveType(parts[0]);
-                int queueSequenceNumber = int.Parse(parts[1]);
+                var grainInterfaceType = this.SiloIndexManager.CachedTypeResolver.ResolveType(parts[0]);
+                var queueSequenceNumber = int.Parse(parts[1]);
 
-                var runtime = this.ServiceProvider.GetRequiredService<IGrainRuntime>();
+                var runtime = ServiceProvider.GetRequiredService<IGrainRuntime>();
 
                 _base = new IndexWorkflowQueueHandlerBase(this.SiloIndexManager, grainInterfaceType, queueSequenceNumber,
-                                                          runtime.SiloAddress, //oldParentGrainServiceRef.GrainServiceSiloAddress,
+                                                          runtime.SiloAddress,
                                                           isDefinedAsFaultTolerantGrain: true /*otherwise it shouldn't have reached here!*/,
                                                           () => this.AsWeaklyTypedReference());
             }

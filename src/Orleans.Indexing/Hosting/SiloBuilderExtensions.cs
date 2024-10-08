@@ -27,7 +27,7 @@ namespace Orleans.Indexing
                 //.AddMemoryGrainStorage(IndexingConstants.INDEXING_STORAGE_PROVIDER_NAME)
                 //.AddMemoryGrainStorage(IndexingConstants.MEMORY_STORAGE_PROVIDER_NAME)
                 //.ConfigureApplicationParts(parts => parts.AddFrameworkPart(typeof(SiloBuilderExtensions).Assembly))
-                //.ConfigureServices(services => services.UseIndexing(indexingOptions))
+                .ConfigureServices(services => services.UseIndexing(indexingOptions))
                 //.ConfigureServices((context, services) => ApplicationPartsIndexableGrainLoader.RegisterGrainServices(context, services, indexingOptions))
                 .UseTransactions();
         }
@@ -41,8 +41,10 @@ namespace Orleans.Indexing
 
             services.AddSingleton<IndexFactory>()
                     .AddFromExisting<IIndexFactory, IndexFactory>();
+
             services.AddSingleton<SiloIndexManager>()
                     .AddFromExisting<ILifecycleParticipant<ISiloLifecycle>, SiloIndexManager>();
+
             services.AddFromExisting<IndexManager, SiloIndexManager>();
 
             // Facet Factory and Mappers
@@ -57,7 +59,7 @@ namespace Orleans.Indexing
         }
 
         internal static void AddGrainService(this IServiceCollection services, Func<IServiceProvider, IGrainService> creationFunc)
-            => services.AddSingleton(sp => creationFunc(sp));
+            => services.AddSingleton(creationFunc);
 
         /// <summary>
         /// Registers an existing registration of <typeparamref name="TImplementation"/> as a provider of service type <typeparamref name="TService"/>.

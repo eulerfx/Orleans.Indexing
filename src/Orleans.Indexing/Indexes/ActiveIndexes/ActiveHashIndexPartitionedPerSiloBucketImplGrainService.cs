@@ -18,18 +18,18 @@ namespace Orleans.Indexing
     /// A simple implementation of a single-grain in-memory hash-index.
     ///
     /// TODO: Generic GrainServices are not supported yet, and that's why the implementation is non-generic.
+    /// Per comments for <see cref="IActiveHashIndexPartitionedPerSiloBucket"/>, we cannot use generics here.
     /// </summary>
-    //Per comments for IActiveHashIndexPartitionedPerSiloBucket, we cannot use generics here.
-    //<typeparam name="K">type of hash-index key</typeparam>
-    //<typeparam name="V">type of grain that is being indexed</typeparam>
+    ///// <typeparam name="K">type of hash-index key</typeparam>
+    ///// <typeparam name="V">type of grain that is being indexed</typeparam>
     [StorageProvider(ProviderName = IndexingConstants.MEMORY_STORAGE_PROVIDER_NAME)]
     [Reentrant]
     internal class ActiveHashIndexPartitionedPerSiloBucketImplGrainService/*<K, V>*/ : GrainService, IActiveHashIndexPartitionedPerSiloBucket/*<K, V> where V : IIndexableGrain*/
     {
-        private HashIndexBucketState<K, V> state;
-        private readonly SiloIndexManager siloIndexManager;
-        private readonly ILogger logger;
-        private readonly string _parentIndexName;
+        HashIndexBucketState<K, V> state;
+        readonly SiloIndexManager siloIndexManager;
+        readonly ILogger logger;
+        readonly string _parentIndexName;
 
         public ActiveHashIndexPartitionedPerSiloBucketImplGrainService(SiloIndexManager siloIndexManager, Type grainInterfaceType, string parentIndexName)
             : base(GetGrainIdentity(siloIndexManager, grainInterfaceType, parentIndexName), siloIndexManager.Silo, siloIndexManager.LoggerFactory)
@@ -45,10 +45,10 @@ namespace Orleans.Indexing
             this.logger = siloIndexManager.LoggerFactory.CreateLoggerWithFullCategoryName<ActiveHashIndexPartitionedPerSiloBucketImplGrainService>();
         }
 
-        private static GrainId GetGrainIdentity(SiloIndexManager siloIndexManager, Type grainInterfaceType, string indexName)
+        static GrainId GetGrainIdentity(SiloIndexManager siloIndexManager, Type grainInterfaceType, string indexName)
             => GetGrainReference(siloIndexManager, grainInterfaceType, indexName).GrainId;
 
-        internal static GrainReference GetGrainReference(SiloIndexManager siloIndexManager, Type grainInterfaceType, string indexName, SiloAddress siloAddress = null)
+        static GrainReference GetGrainReference(SiloIndexManager siloIndexManager, Type grainInterfaceType, string indexName, SiloAddress siloAddress = null)
             => siloIndexManager.MakeGrainServiceGrainReference(IndexingConstants.HASH_INDEX_PARTITIONED_PER_SILO_BUCKET_GRAIN_SERVICE_TYPE_CODE,
                                                                IndexUtils.GetIndexGrainPrimaryKey(grainInterfaceType, indexName),
                                                                siloAddress ?? siloIndexManager.SiloAddress);
@@ -70,9 +70,9 @@ namespace Orleans.Indexing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private async Task DirectApplyIndexUpdates(IIndexableGrain g, IList<IMemberUpdate> updates, bool isUniqueIndex, IndexMetaData idxMetaData, SiloAddress siloAddress)
+        async Task DirectApplyIndexUpdates(IIndexableGrain g, IList<IMemberUpdate> updates, bool isUniqueIndex, IndexMetaData idxMetaData, SiloAddress siloAddress)
         {
-            foreach (IMemberUpdate updt in updates)
+            foreach (var updt in updates)
             {
                 await DirectApplyIndexUpdate(g, updt, isUniqueIndex, idxMetaData, siloAddress);
             }
@@ -82,12 +82,12 @@ namespace Orleans.Indexing
             => this.DirectApplyIndexUpdate(updatedGrain, iUpdate.Value, isUniqueIndex, idxMetaData, siloAddress);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private Task<bool> DirectApplyIndexUpdate(V updatedGrain, IMemberUpdate updt, bool isUniqueIndex, IndexMetaData idxMetaData, SiloAddress siloAddress)
+        Task<bool> DirectApplyIndexUpdate(V updatedGrain, IMemberUpdate updt, bool isUniqueIndex, IndexMetaData idxMetaData, SiloAddress siloAddress)
             // Updates the index bucket synchronously (note that no other thread can run concurrently before we reach an await operation,
             // when execution is yielded back to the Orleans scheduler, so no concurrency control mechanism (e.g., locking) is required).
             => Task.FromResult(HashIndexBucketUtils.UpdateBucketState(updatedGrain, updt, state, isUniqueIndex, idxMetaData));
 
-        private Exception LogException(string message, IndexingErrorCode errorCode)
+        Exception LogException(string message, IndexingErrorCode errorCode)
         {
             var e = new Exception(message);
             this.logger.Error(errorCode, message, e);

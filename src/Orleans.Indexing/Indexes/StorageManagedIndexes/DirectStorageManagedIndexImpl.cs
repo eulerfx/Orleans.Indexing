@@ -124,7 +124,7 @@ namespace Orleans.Indexing
 
         async Task<IOrleansQueryResult<IIndexableGrain>> IIndexInterface.LookupAsync(object key) => await this.LookupAsync((K)key);
 
-        private void EnsureGrainStorage()
+        void EnsureGrainStorage()
         {
             if (_grainStorage == null)
             {

@@ -7,15 +7,15 @@ namespace Orleans.Indexing.Facet
 {
     internal class InterfaceToUpdatesMap: IEnumerable<KeyValuePair<Type, IReadOnlyDictionary<string, IMemberUpdate>>>
     {
-        private readonly IReadOnlyDictionary<Type, IReadOnlyDictionary<string, IMemberUpdate>> updatesByInterface;
+        readonly IReadOnlyDictionary<Type, IReadOnlyDictionary<string, IMemberUpdate>> updatesByInterface;
+
         internal IReadOnlyDictionary<Type, Guid> WorkflowIds { get; }
 
         internal IReadOnlyDictionary<string, IMemberUpdate> this[Type interfaceType] => this.updatesByInterface[interfaceType];
 
         internal IndexUpdateReason UpdateReason { get; }
 
-        internal InterfaceToUpdatesMap(IndexUpdateReason updateReason, Func<Guid> getWorkflowIdFunc,
-                                       IEnumerable<(Type interfaceType, IEnumerable<(string indexName, IMemberUpdate mu)> namedUpdates)> updateEnumerator)
+        internal InterfaceToUpdatesMap(IndexUpdateReason updateReason, Func<Guid> getWorkflowIdFunc, IEnumerable<(Type interfaceType, IEnumerable<(string indexName, IMemberUpdate mu)> namedUpdates)> updateEnumerator)
         {
             this.UpdateReason = updateReason;
             this.updatesByInterface = updateEnumerator.Select(x => (itf: x.interfaceType, dict: x.namedUpdates.ToDictionary(upd => upd.indexName, upd => upd.mu)))

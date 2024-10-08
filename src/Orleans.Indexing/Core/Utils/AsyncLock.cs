@@ -62,7 +62,7 @@ namespace Orleans.Indexing
                 : waitTask.ContinueWith(_ => releaser, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         }
 
-        private class LockReleaser : IDisposable
+        class LockReleaser : IDisposable
         {
             private AsyncLock target;
 

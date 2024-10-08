@@ -18,11 +18,11 @@ namespace Orleans.Indexing
         {
             if (index is IActiveHashIndexPartitionedPerSilo)
             {
-                var bucketInCurrentSilo = siloIndexManager.GetGrainService<IActiveHashIndexPartitionedPerSiloBucket>(
-                    GetAHashIndexPartitionedPerSiloGrainReference(siloIndexManager,
-                                                                  IndexUtils.GetIndexNameFromIndexGrain((IAddressable)index), index.GetType().GetGenericArguments()[1],
-                                                                  siloAddress
-                ));
+                var grainReference = GetActiveHashIndexPartitionedPerSiloGrainReference(
+                    siloIndexManager,
+                    IndexUtils.GetIndexNameFromIndexGrain((IAddressable)index), index.GetType().GetGenericArguments()[1],
+                    siloAddress);
+                var bucketInCurrentSilo = siloIndexManager.GetGrainService<IActiveHashIndexPartitionedPerSiloBucket>(grainReference);
                 return bucketInCurrentSilo.DirectApplyIndexUpdateBatch(iUpdates, isUniqueIndex, idxMetaData/*, siloAddress*/);
             }
             return index.DirectApplyIndexUpdateBatch(iUpdates, isUniqueIndex, idxMetaData, siloAddress);
@@ -38,19 +38,21 @@ namespace Orleans.Indexing
         {
             if (index is IActiveHashIndexPartitionedPerSilo)
             {
-                var bucketInCurrentSilo = siloIndexManager.GetGrainService<IActiveHashIndexPartitionedPerSiloBucket>(
-                    GetAHashIndexPartitionedPerSiloGrainReference(siloIndexManager, 
-                                                                  IndexUtils.GetIndexNameFromIndexGrain((IAddressable)index), index.GetType().GetGenericArguments()[1],
-                                                                  siloAddress
-                ));
+                var grainReference = GetActiveHashIndexPartitionedPerSiloGrainReference(
+                    siloIndexManager,
+                    IndexUtils.GetIndexNameFromIndexGrain((IAddressable)index), index.GetType().GetGenericArguments()[1],
+                    siloAddress);
+                var bucketInCurrentSilo = siloIndexManager.GetGrainService<IActiveHashIndexPartitionedPerSiloBucket>(grainReference);
                 return bucketInCurrentSilo.DirectApplyIndexUpdate(updatedGrain, update, idxMetaData.IsUniqueIndex, idxMetaData/*, siloAddress*/);
             }
             return index.DirectApplyIndexUpdate(updatedGrain, update, idxMetaData.IsUniqueIndex, idxMetaData, siloAddress);
         }
 
 
-        private static GrainReference GetAHashIndexPartitionedPerSiloGrainReference(SiloIndexManager siloIndexManager, string indexName, Type grainInterfaceType, SiloAddress siloAddress)
-            => siloIndexManager.MakeGrainServiceGrainReference(IndexingConstants.HASH_INDEX_PARTITIONED_PER_SILO_BUCKET_GRAIN_SERVICE_TYPE_CODE,
-                                                               IndexUtils.GetIndexGrainPrimaryKey(grainInterfaceType, indexName), siloAddress);
+        static GrainReference GetActiveHashIndexPartitionedPerSiloGrainReference(SiloIndexManager siloIndexManager, string indexName, Type grainInterfaceType, SiloAddress siloAddress) =>
+            siloIndexManager.MakeGrainServiceGrainReference(
+                typeData: IndexingConstants.HASH_INDEX_PARTITIONED_PER_SILO_BUCKET_GRAIN_SERVICE_TYPE_CODE,
+                systemGrainId: IndexUtils.GetIndexGrainPrimaryKey(grainInterfaceType, indexName),
+                siloAddress: siloAddress);
     }
 }

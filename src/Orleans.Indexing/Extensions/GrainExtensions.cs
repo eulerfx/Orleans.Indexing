@@ -36,7 +36,7 @@ namespace Orleans.Indexing
                 ? (TGrainInterface)siloIndexManager.GrainReferenceRuntime.Cast(grain.AsWeaklyTypedReference(), grainInterfaceType)
                 : throw new ArgumentNullException("grain", "Cannot pass null as an argument to AsReference");
 
-        private const string WRONG_GRAIN_ERROR_MSG = "Passing a half baked grain as an argument. It is possible that you instantiated a grain class explicitly, as a regular object and not via Orleans runtime or via proper test mocking";
+        const string WRONG_GRAIN_ERROR_MSG = "Passing a half baked grain as an argument. It is possible that you instantiated a grain class explicitly, as a regular object and not via Orleans runtime or via proper test mocking";
 
         internal static GrainReference AsWeaklyTypedReference(this IAddressable grain)
         {
